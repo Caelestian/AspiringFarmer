@@ -90,4 +90,5 @@ Broader custom-resource and integration support need further work.
 The registry validates during materialization; a failed description can leave a partially configured native builder.
 Descriptions do not yet support a separate validation pass or rollback.
 
-No build or startup performance budget has been measured. Full startup under .NET 11 and stable .NET 11 verification remain outstanding.
+The [initial performance baseline](../../benchmarks/baseline-2026-11-06.md) measures model construction and source-project builds.
+Dashboard/application startup timing, full startup under .NET 11, and stable .NET 11 verification remain outstanding.

@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/DslFSharp/DslFSharp.fsproj" />
+    <Project Path="benchmarks/NativeCSharp/NativeCSharp.csproj" />
+    <Project Path="benchmarks/NativeFSharp/NativeFSharp.fsproj" />
+    <Project Path="benchmarks/Support/Support.csproj" />
+  </Folder>
   <Folder Name="/prototypes/">
     <Project Path="prototypes/NativeAspire/NativeAspire.fsproj" />
     <Project Path="prototypes/Service/Service.fsproj" />

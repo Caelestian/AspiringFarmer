@@ -1,0 +1,16 @@
+{
+  "NativeCSharp": {
+    "elapsedMs": 971.9345000339672,
+    "rewrittenDlls": []
+  },
+  "NativeFSharp": {
+    "elapsedMs": 2259.046708000824,
+    "rewrittenDlls": [
+      "benchmarks/NativeFSharp/bin/Release/net10.0/NativeFSharp.dll"
+    ]
+  },
+  "DslFSharp": {
+    "elapsedMs": 1202.5763749843463,
+    "rewrittenDlls": []
+  }
+}

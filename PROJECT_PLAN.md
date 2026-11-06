@@ -1,12 +1,16 @@
 # AspiringFarmer project plan
 
-Status: proposal with working syntax and native Aspire prototypes. Performance targets remain unmeasured.
+Status: proposal with working libraries, native Aspire prototypes, and initial local performance measurements.
 
 The initial core and Redis libraries now live under `src/`. The solution includes a native sample and consumer compiler fixtures.
 Capability checks cover connection references, readiness waits, native callback types, and unavailable resource operations.
-These checks validate the initial API; broader integration support and performance baselines remain outstanding.
+These checks validate the initial API; broader integration support remains outstanding.
 The extracted `net10.0` libraries build in the .NET 10 sample and a separate .NET 11 RC AppHost variant.
 Native model and registry checks pass on both runtimes. Unsupported CE operations still need clearer compiler diagnostics.
+
+The [initial performance baseline](benchmarks/baseline-2026-11-06.md) compares native C#, native F#, and DSL models at 5, 25, and 100 declared resources.
+At 100 resources, the DSL's median additional construction time was 2.86 ms over native F# on the measured machine.
+The AppHost-edit source build exceeded the proposed 10% budget. Package-consumer isolation and native F# metadata-generation behavior need further investigation.
 
 ## Purpose
 

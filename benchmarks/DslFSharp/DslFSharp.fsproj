@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.6.4" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsAspireHost>true</IsAspireHost>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <ProjectReference Include="../../src/AspiringFarmer.Redis/AspiringFarmer.Redis.fsproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="../Support/Support.csproj" IsAspireProjectResource="false" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+</Project>

@@ -46,4 +46,5 @@ Package versions are centralized in `Directory.Packages.props`. The executable h
 FSharp.Core is explicitly versioned because central package management disables its implicit SDK reference.
 
 Name validation occurs during materialization. A failed declaration can leave a partially configured builder.
-Separate validation, stable public API naming, and performance baselines remain outstanding.
+Separate validation and stable public API naming remain outstanding.
+The [initial performance baseline](../benchmarks/baseline-2026-11-06.md) records model-construction overhead and source-project build costs.
