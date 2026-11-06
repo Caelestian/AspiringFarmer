@@ -18,9 +18,9 @@ Preserve native `IResourceBuilder<'Resource>` values at interoperability boundar
 
 Use one outer `distributedApp` computation expression to own host creation and resource registration. Resource expressions must not require an explicit application-builder argument.
 
-Nested resource expressions produce typed registration descriptions. The outer expression binds each description against its application builder and returns a native resource builder.
+Nested resource expressions produce typed registration descriptions. The outer expression resolves yielded descriptions and their dependencies against one native application builder.
 
-Prototype `let!` for registration and typed resource bindings. Ordinary `let` binds reusable descriptions or local values without registering a resource.
+Use implicit `Yield` to include bare resource expressions. Ordinary `let` binds typed descriptions or local values without registering a resource. Include dependencies transitively when materializing yielded resources.
 
 Keep the application builder explicit inside the implementation. Do not use global state or ambient mutable context to connect nested expressions.
 
@@ -39,7 +39,7 @@ Do not claim complete compatibility until representative third-party integration
 
 ## Proposed authoring experience
 
-The following code is a design sketch, not a working API. Names and argument forms need compiler validation.
+The following code sketches the intended Aspire API. The [implicit yield prototype](prototypes/ImplicitYield/README.md) validates the core syntax with a standalone model, without Aspire hosting.
 
 ```fsharp
 open AspiringFarmer
@@ -49,17 +49,17 @@ let main args =
     let app = distributedApp {
         withArgs args
 
-        let! cache = redis "cache" {
+        let cache = redis "cache" {
             data_volume
         }
 
-        let! databaseServer = postgres "postgres" {
+        let databaseServer = postgres "postgres" {
             data_volume
         }
 
-        let! database = database databaseServer "appdb"
+        let database = database databaseServer "appdb"
 
-        let! api = project "api" "../Api/Api.fsproj" {
+        let api = project "api" "../Api/Api.fsproj" {
             reference cache
             reference database
             wait_for cache
@@ -67,7 +67,7 @@ let main args =
             external_http_endpoints
         }
 
-        let! frontend = project "frontend" "../Web/Web.fsproj" {
+        project "frontend" "../Web/Web.fsproj" {
             reference api
             wait_for api
         }
@@ -79,11 +79,11 @@ let main args =
 
 The outer expression creates and builds the application. Running the result starts it, preserving a separate boundary for tests and publishing workflows.
 
-Each `let!` registers a resource once and binds its native typed builder for later declarations. Here, binding represents registration, not asynchronous execution.
+Each bare resource expression yields a typed description. The outer expression includes its reference and wait dependencies, registers each shared description once, and rejects conflicting names.
 
-An ordinary `let` cannot implicitly register a description with the enclosing expression. Confirm that this distinction produces understandable compiler errors and documentation.
+Ordinary `let` creates a description. An unused description does not register a resource. Native builders remain an internal materialization result, accessible through explicit callbacks.
 
-Prototype the interaction between `withArgs`, `let!`, local bindings, and the final expression. F# custom-operation rules may require implementation changes or syntax adjustments.
+The standalone prototype verifies `withArgs`, local bindings, implicit yields, conditionals, loops, dependency inclusion, and conflict detection. Native Aspire integration remains unverified.
 
 Collect host options before creating the native application builder. The implementation must pass arguments to host creation before registering resources.
 
@@ -240,7 +240,7 @@ Measure compile time alongside runtime performance. A DSL with expensive inferen
 1. Add a solution, central dependency versions, and a minimal runnable F# AppHost.
 2. Add the equivalent C# and native F# benchmark applications.
 3. Record project metadata and compatibility-tooling findings.
-4. Compile the outer expression with `withArgs`, nested resources, local bindings, and typed `let!` registration.
+4. Compile the outer expression with `withArgs`, nested resources, local bindings, and implicit resource yields.
 5. Implement one resource description, its outer-expression binding, and native callback access.
 6. Add typed reference and wait operations, including negative compiler checks.
 7. Run the vertical sample and compare its model and timing with the baselines.
