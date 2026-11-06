@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Case Condition="'$(Case)' == ''">Valid</Case>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/AspiringFarmer.Redis/AspiringFarmer.Redis.fsproj" />
+    <Compile Include="Cases/$(Case).fs" />
+  </ItemGroup>
+</Project>

@@ -8,12 +8,11 @@
     <AspireUseCliBundle>true</AspireUseCliBundle>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.4" />
-    <PackageReference Include="Aspire.Hosting.Redis" Version="13.6.4" />
-    <PackageReference Include="FSharp.Aspire.Hosting.AppHost" Version="13.0.0" />
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+    <ProjectReference Include="../../src/AspiringFarmer.Redis/AspiringFarmer.Redis.fsproj" IsAspireProjectResource="false" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Dsl.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

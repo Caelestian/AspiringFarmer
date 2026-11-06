@@ -2,6 +2,8 @@
 
 This prototype connects implicit resource yields to native Aspire builders.
 It uses Aspire 13.6.4 and FSharp.Aspire.Hosting.AppHost 13.0.0 for F# compatibility overloads.
+The DSL implementation now lives in `src/AspiringFarmer` and `src/AspiringFarmer.Redis`.
+The prototype consumes those libraries through a project reference marked `IsAspireProjectResource="false"`.
 
 ## Run
 
@@ -30,6 +32,7 @@ dotnet prototypes/NativeAspire/bin/Debug/net10.0/NativeAspire.dll --verify
 
 The checks compare native resource types, annotation kinds, endpoint settings, reference relationships, and readiness dependencies.
 They also check shared Redis registration and successful application construction.
+Additional checks verify independent registrations when reusing a description across applications, wait-only dependencies, and unused descriptions.
 Aspire adds project rebuilder resources automatically; those resources participate in the comparison.
 
 The `--native` option selects an equivalent AppHost written with direct Aspire builder calls:
@@ -61,7 +64,7 @@ On November 6, 2026, using macOS arm64, .NET SDK 10.0.400, and OrbStack:
 - Ctrl+C stopped the AppHost session.
 
 A separate `net11.0` build succeeded with SDK 11.0.100-rc.3.26522.148.
-The native model checks also passed on the .NET 11 RC runtime.
+The native model and registry checks also passed on the .NET 11 RC runtime after extracting the libraries.
 Use the `PrototypeTargetFramework=net11.0` MSBuild property from an environment selecting that SDK to reproduce the build.
 The repository continues to select .NET 10 for ordinary development.
 
@@ -81,7 +84,9 @@ Readiness follows explicit wait annotations, not the order resources appear in t
 The outer expression currently returns `IDistributedApplicationBuilder`; the entry point calls `Build` and `Run` explicitly.
 This makes model inspection convenient. Decide the final return type before stabilizing the public API.
 
-Reference operations currently cover Redis and projects only. Wait capability constraints, negative compiler checks, custom resources, and broader integration support need further work.
+Connection references now accept typed resources implementing `IResourceWithConnectionString`; service-discovery references currently cover projects only.
+Wait operations require `IResourceWithWaitSupport`. The [compiler checks](../../tests/Compiler/README.md) verify these constraints and custom connection-resource factories.
+Broader custom-resource and integration support need further work.
 The registry validates during materialization; a failed description can leave a partially configured native builder.
 Descriptions do not yet support a separate validation pass or rollback.
 

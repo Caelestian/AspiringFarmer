@@ -2,6 +2,12 @@
 
 Status: proposal with working syntax and native Aspire prototypes. Performance targets remain unmeasured.
 
+The initial core and Redis libraries now live under `src/`. The solution includes a native sample and consumer compiler fixtures.
+Capability checks cover connection references, readiness waits, native callback types, and unavailable resource operations.
+These checks validate the initial API; broader integration support and performance baselines remain outstanding.
+The extracted `net10.0` libraries build in the .NET 10 sample and a separate .NET 11 RC AppHost variant.
+Native model and registry checks pass on both runtimes. Unsupported CE operations still need clearer compiler diagnostics.
+
 ## Purpose
 
 AspiringFarmer provides a typed F# domain-specific language for Aspire AppHosts. Developers should be able to read the application topology directly from `Program.fs`.

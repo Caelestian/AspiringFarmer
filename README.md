@@ -17,6 +17,16 @@ with native Aspire hosting. Development uses the stable .NET 10 SDK.
 
 ## Development
 
+The initial [library implementation](src/README.md) includes the core DSL and an
+optional Redis integration. Its API remains experimental.
+
+Build the solution and run the capability compiler checks:
+
+```sh
+dotnet build AspiringFarmer.slnx
+python3 tests/Compiler/check.py
+```
+
 Open the repository in a dev container to get the .NET 10 SDK, Ionide, Fantomas,
 and FsAutoComplete. The container restores the local .NET tools when it is first
 created.

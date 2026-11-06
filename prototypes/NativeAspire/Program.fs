@@ -3,7 +3,8 @@ module NativeAspire.Program
 open System
 open Aspire.Hosting
 open Aspire.Hosting.ApplicationModel
-open NativeAspire.Dsl
+open AspiringFarmer
+open AspiringFarmer.Redis
 
 let configureProject (resource: IResourceBuilder<ProjectResource>) =
     resource.WithHttpEndpoint(targetPort = 8080, name = "http") |> ignore
@@ -91,6 +92,49 @@ let main args =
         printfn "PASS: native model matches resource types, endpoints, references, and waits"
         printfn "PASS: shared Redis description registers exactly once"
         printfn "PASS: native Aspire application builds successfully"
+
+        let shared = redis "shared" { data_volume }
+        let first = distributedApp { shared }
+        let second = distributedApp { shared }
+
+        if Object.ReferenceEquals(first.Resources[0], second.Resources[0]) then
+            failwith "Description reuse leaked a native resource between applications."
+
+        printfn "PASS: reusable descriptions create independent resources per application"
+
+        let waitOnly =
+            distributedApp {
+                let unused = redis "unused" { data_volume }
+                project "waiter" "../Service/Service.fsproj" { wait_for shared }
+            }
+
+        let waiter =
+            waitOnly.Resources |> Seq.find (fun resource -> resource.Name = "waiter")
+
+        let waits =
+            waiter.Annotations
+            |> Seq.choose (function
+                | :? WaitAnnotation as wait -> Some wait.Resource.Name
+                | _ -> None)
+            |> Seq.toList
+
+        let references =
+            waiter.Annotations
+            |> Seq.choose (function
+                | :? ResourceRelationshipAnnotation as relationship when relationship.Type = "Reference" ->
+                    Some relationship
+                | _ -> None)
+            |> Seq.toList
+
+        if
+            waits <> [ "shared" ]
+            || not references.IsEmpty
+            || (waitOnly.Resources |> Seq.exists (fun resource -> resource.Name = "unused"))
+        then
+            failwith "Wait-only dependencies or unused descriptions have incorrect registration behavior."
+
+        printfn
+            "PASS: wait-only dependencies register without connection references; unused descriptions stay unregistered"
 
         for resource in dsl.Resources do
             printfn "  %s: %s" resource.Name (resource.GetType().Name)

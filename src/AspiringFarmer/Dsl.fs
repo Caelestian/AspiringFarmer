@@ -1,4 +1,4 @@
-module NativeAspire.Dsl
+namespace AspiringFarmer
 
 open System
 open System.Collections.Generic
@@ -37,35 +37,39 @@ and Description<'T when 'T :> IResource> =
           Name: string
           Create: IDistributedApplicationBuilder -> Registry -> IResourceBuilder<'T> }
 
+/// Configuration actions remain typed to their native resource builder.
 type ResourceState<'T when 'T :> IResource> =
     internal
         { Actions: (Registry -> IResourceBuilder<'T> -> unit) list }
 
-type RedisBuilder(name: string) =
-    member _.Yield(()) : ResourceState<RedisResource> = { Actions = [] }
+    member state.Add(action) =
+        { Actions = state.Actions @ [ action ] }
 
-    [<CustomOperation("data_volume")>]
-    member _.DataVolume(state: ResourceState<RedisResource>) =
-        { Actions = state.Actions @ [ fun _ resource -> resource.WithDataVolume() |> ignore ] }
+/// Base for typed resource expressions, including third-party resource factories.
+type ResourceBuilder<'T when 'T :> IResource>
+    (name: string, create: IDistributedApplicationBuilder -> IResourceBuilder<'T>) =
+    member _.Yield(()) : ResourceState<'T> = { Actions = [] }
 
     [<CustomOperation("configure")>]
-    member _.Configure(state: ResourceState<RedisResource>, configure: IResourceBuilder<RedisResource> -> unit) =
-        { Actions = state.Actions @ [ fun _ resource -> configure resource ] }
+    member _.Configure(state: ResourceState<'T>, configure: IResourceBuilder<'T> -> unit) =
+        state.Add(fun _ resource -> configure resource)
 
-    member _.Run(state: ResourceState<RedisResource>) : Description<RedisResource> =
+    member _.Run(state: ResourceState<'T>) : Description<'T> =
         { Id = Guid.NewGuid()
           Name = name
           Create =
             fun builder registry ->
-                let resource = builder.AddRedis name
+                let resource = create builder
                 state.Actions |> List.iter (fun action -> action registry resource)
                 resource }
 
 type ProjectBuilder(name: string, path: string) =
-    member _.Yield(()) : ResourceState<ProjectResource> = { Actions = [] }
+    inherit ResourceBuilder<ProjectResource>(name, fun builder -> builder.AddProject(name, path))
 
     [<CustomOperation("reference")>]
-    member _.Reference(state: ResourceState<ProjectResource>, dependency: Description<RedisResource>) =
+    member _.Reference<'T when 'T :> IResourceWithConnectionString>
+        (state: ResourceState<ProjectResource>, dependency: Description<'T>)
+        =
         { Actions =
             state.Actions
             @ [ fun registry resource -> resource.WithReference(registry.Resolve dependency) |> ignore ] }
@@ -77,7 +81,9 @@ type ProjectBuilder(name: string, path: string) =
             @ [ fun registry resource -> resource.WithReference(registry.Resolve dependency) |> ignore ] }
 
     [<CustomOperation("wait_for")>]
-    member _.WaitFor(state: ResourceState<ProjectResource>, dependency: Description<'T>) =
+    member _.WaitFor<'T when 'T :> IResourceWithWaitSupport>
+        (state: ResourceState<ProjectResource>, dependency: Description<'T>)
+        =
         { Actions =
             state.Actions
             @ [ fun registry resource -> resource.WaitFor(registry.Resolve dependency) |> ignore ] }
@@ -88,24 +94,7 @@ type ProjectBuilder(name: string, path: string) =
             state.Actions
             @ [ fun _ resource -> resource.WithExternalHttpEndpoints() |> ignore ] }
 
-    [<CustomOperation("configure")>]
-    member _.Configure(state: ResourceState<ProjectResource>, configure: IResourceBuilder<ProjectResource> -> unit) =
-        { Actions = state.Actions @ [ fun _ resource -> configure resource ] }
-
-    member _.Run(state: ResourceState<ProjectResource>) : Description<ProjectResource> =
-        { Id = Guid.NewGuid()
-          Name = name
-          Create =
-            fun builder registry ->
-                let resource = builder.AddProject(name, path)
-                state.Actions |> List.iter (fun action -> action registry resource)
-                resource }
-
-let redis name = RedisBuilder name
-let project name path = ProjectBuilder(name, path)
-
 type HostOption = Args of string array
-let withArgs args = Args args
 
 type AppItem =
     | Option of HostOption
@@ -147,4 +136,8 @@ type DistributedAppBuilder() =
 
         builder
 
-let distributedApp = DistributedAppBuilder()
+[<AutoOpen>]
+module Builders =
+    let project name path = ProjectBuilder(name, path)
+    let withArgs args = Args(Array.copy args)
+    let distributedApp = DistributedAppBuilder()
