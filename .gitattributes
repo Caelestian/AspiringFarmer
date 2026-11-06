@@ -1,0 +1,20 @@
+# Normalize text files to LF in the repository.
+* text=auto eol=lf
+
+# Windows scripts need CRLF when checked out.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Keep binary files out of text diffs.
+*.dll binary
+*.exe binary
+*.pdb binary
+*.nupkg binary
+*.snupkg binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary

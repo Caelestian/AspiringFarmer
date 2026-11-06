@@ -1,0 +1,20 @@
+{
+  "name": "AspiringFarmer (.NET 11)",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:11.0",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Ionide.Ionide-fsharp"
+      ],
+      "settings": {
+        "[fsharp]": {
+          "editor.defaultFormatter": "Ionide.Ionide-fsharp",
+          "editor.formatOnSave": true
+        },
+        "FSharp.suggestGitignore": false
+      }
+    }
+  },
+  "postCreateCommand": "dotnet tool restore",
+  "remoteUser": "vscode"
+}
