@@ -7,14 +7,9 @@ Run it from the repository root with an SDK that includes F# Interactive:
 dotnet fsi prototypes/ImplicitYield/Prototype.fsx
 ```
 
-The repository pins .NET SDK 11.0.100. That SDK was unavailable on the prototype machine.
-The script passed using the installed .NET 10.0.400 F# Interactive directly:
-
-```sh
-dotnet /usr/local/share/dotnet/sdk/10.0.400/FSharp/fsi.dll prototypes/ImplicitYield/Prototype.fsx
-```
-
-The SDK pin remains unchanged. The absolute command above is specific to that machine.
+The repository selects a stable .NET 10 SDK with feature-band roll-forward and excludes prerelease SDKs.
+All eight checks pass with .NET SDK 10.0.400. They also passed with .NET 11 RC3 during an optional compatibility experiment.
+The .NET 11 preview is not required.
 
 ## Findings
 

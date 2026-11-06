@@ -123,6 +123,25 @@ Prefer a dependency or contribution where practical. Record a concrete reason be
 
 [Aspire project resources](https://aspire.dev/integrations/dotnet/project-resources/) documents project references, generated metadata, and project build coordination. Verify behavior against the pinned release rather than assuming current documentation matches it.
 
+## .NET compatibility policy
+
+Use a stable .NET 10 SDK for development. SDK selection does not determine the library target framework or the frameworks of orchestrated applications.
+
+Target .NET 10 and .NET 11 only for the library and AppHosts. .NET 8 and .NET 9 are outside the project scope.
+
+Use `net10.0` as the initial library target. Verify that this package works in both .NET 10 and .NET 11 AppHosts.
+Add a separate `net11.0` library target only if framework-specific APIs or dependencies require it.
+Supporting both runtimes does not require two package builds when the same assembly works on both.
+
+Make .NET 10 and .NET 11 explicit CI compatibility targets. Keep .NET 11 checks in a separate SDK environment while it remains a prerelease.
+The ordinary development workflow must continue to work with stable .NET 10. Avoid requiring .NET 11-only APIs in shared code.
+
+.NET 11 compatibility remains provisional until the native Aspire sample and selected hosting dependencies pass on that runtime.
+Before claiming stable .NET 11 support, rerun the compatibility checks against its stable release.
+Distinguish AppHost targets from the versions of applications that Aspire can orchestrate.
+
+Sources: [Microsoft .NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy), [Aspire support policy](https://aspire.dev/support/).
+
 ## Package structure
 
 Begin with the smallest useful set of projects:
@@ -177,7 +196,7 @@ Avoid an extra process, runtime compilation, and runtime assembly scanning in th
 
 Create equivalent minimal C# and F# AppHosts with pinned dependencies. Confirm the installed SDK can build the repository's selected target.
 
-The repository currently pins SDK `11.0.100`. Decide the library target framework separately from the development SDK and verify the supported combination.
+The repository selects stable .NET 10 SDKs, starting at `10.0.100` with feature-band roll-forward. Prerelease SDKs are excluded.
 
 Evaluate FSharp.Aspire.Hosting, path-based projects, generated project metadata, CLI launch, dashboard startup, and one publishing workflow.
 
@@ -231,7 +250,7 @@ Measure compile time alongside runtime performance. A DSL with expensive inferen
 
 1. How should reusable groups bind multiple resources and return typed results? Keep the outer `distributedApp` expression and avoid explicit host arguments in user declarations.
 2. Should project metadata generation be required? The initial recommendation is an optional typed metadata form alongside project paths.
-3. Which Aspire release and target framework form the first supported pair? Pin a verified pair before expanding integration coverage.
+3. Which Aspire release supports the planned .NET 10 and .NET 11 AppHosts? Pin verified hosting dependencies before expanding integration coverage.
 4. Can existing F# compatibility tooling satisfy the interoperability requirement? Verify provider-specific generic constraints and packaging before choosing a dependency.
 5. Which publishing integration provides the first deployment acceptance case? Choose one representative workflow and document its tested scope.
 
