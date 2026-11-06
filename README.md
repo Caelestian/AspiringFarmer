@@ -10,6 +10,11 @@ AspiringFarmer will support .NET 10 and .NET 11 AppHosts, with an initial
 `net10.0` library target. .NET 11 compatibility is provisional until verified
 with native Aspire hosting. Development uses the stable .NET 10 SDK.
 
+## Prototypes
+
+- [Implicit yield syntax](prototypes/ImplicitYield/README.md)
+- [Native Aspire registration and runnable sample](prototypes/NativeAspire/README.md)
+
 ## Development
 
 Open the repository in a dev container to get the .NET 10 SDK, Ionide, Fantomas,

@@ -31,8 +31,8 @@ The model records registrations; it does not create or run a native Aspire AppHo
 Resource-kind markers survive bindings, but this prototype does not restrict operations by Aspire capability interfaces.
 For example, its shared resource builder currently exposes `data_volume` on project descriptions too.
 
-The next experiment should replace recorded registration with native Aspire resource creation.
-Resolve typed descriptions to native builders inside a per-application registry, preserving shared identity and deferred values.
-Verify native callbacks and third-party resource descriptions before adopting the architecture for the library.
+The [native Aspire prototype](../NativeAspire/README.md) now replaces recorded registration with native resource creation.
+It verifies native callbacks, model equivalence, manifest equivalence, and a running Redis/API/frontend topology.
+Third-party resource descriptions remain an additional check before adopting the architecture for the library.
 
 Do not infer performance results from this syntax experiment. Its list concatenation and graph representation are provisional.

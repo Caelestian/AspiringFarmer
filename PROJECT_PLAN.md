@@ -1,6 +1,6 @@
 # AspiringFarmer project plan
 
-Status: proposal for discussion. No DSL or performance claims have been validated yet.
+Status: proposal with working syntax and native Aspire prototypes. Performance targets remain unmeasured.
 
 ## Purpose
 
@@ -83,7 +83,11 @@ Each bare resource expression yields a typed description. The outer expression i
 
 Ordinary `let` creates a description. An unused description does not register a resource. Native builders remain an internal materialization result, accessible through explicit callbacks.
 
-The standalone prototype verifies `withArgs`, local bindings, implicit yields, conditionals, loops, dependency inclusion, and conflict detection. Native Aspire integration remains unverified.
+The standalone prototype verifies `withArgs`, local bindings, implicit yields, conditionals, loops, dependency inclusion, and conflict detection.
+
+The [native Aspire prototype](prototypes/NativeAspire/README.md) verifies typed materialization, shared resource registration, native callbacks, and matching manifests against direct Aspire declarations.
+Redis and two project instances reached ready state under .NET 10. Native model checks pass on .NET 10 and .NET 11 RC3.
+The prototype returns the native application builder for inspection; the final outer-expression return type remains a design decision.
 
 Collect host options before creating the native application builder. The implementation must pass arguments to host creation before registering resources.
 
