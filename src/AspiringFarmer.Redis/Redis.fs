@@ -5,7 +5,12 @@ open Aspire.Hosting.ApplicationModel
 open AspiringFarmer
 
 type RedisBuilder(name: string) =
-    inherit ResourceBuilder<RedisResource>(name, fun builder -> builder.AddRedis name)
+    inherit
+        ResourceBuilder<RedisResource>(
+            name,
+            fun (builder: IDistributedApplicationBuilder) (registry: Registry) ->
+                builder.AddRedis(registry.QualifyName name)
+        )
 
     [<CustomOperation("data_volume")>]
     member _.DataVolume(state: ResourceState<RedisResource>) =

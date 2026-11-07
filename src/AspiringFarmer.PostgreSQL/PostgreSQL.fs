@@ -10,14 +10,14 @@ type PostgreSQLBuilder(name: string, password: Description<ParameterResource> op
             name,
             fun builder registry ->
                 match password with
-                | None -> builder.AddPostgres name
+                | None -> builder.AddPostgres(registry.QualifyName name)
                 | Some description ->
                     let parameter = registry.Resolve description
 
                     if not parameter.Resource.Secret then
                         invalidArg "password" "A PostgreSQL password requires a secret parameter."
 
-                    builder.AddPostgres(name, password = parameter)
+                    builder.AddPostgres(registry.QualifyName name, password = parameter)
         )
 
     new(name) = PostgreSQLBuilder(name, None)
@@ -35,5 +35,5 @@ module Builders =
     let database name (server: Description<PostgresServerResource>) =
         ResourceBuilder<PostgresDatabaseResource>(
             name,
-            fun _ (registry: Registry) -> (registry.Resolve server).AddDatabase name
+            fun _ (registry: Registry) -> (registry.Resolve server).AddDatabase(registry.QualifyName name)
         )

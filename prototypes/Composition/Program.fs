@@ -9,9 +9,6 @@ open AspiringFarmer.PostgreSQL
 let migrationPath = "../PostgreSQL.Migration/PostgreSQL.Migration.fsproj"
 let apiPath = "../Service/Service.fsproj"
 
-let configureMigration (databaseName: string) (resource: IResourceBuilder<ProjectResource>) =
-    resource.WithEnvironment("MIGRATION_DATABASE", databaseName) |> ignore
-
 let configureApi (resource: IResourceBuilder<ProjectResource>) =
     resource.WithHttpEndpoint(name = "http").WithHttpHealthCheck("/health")
     |> ignore
@@ -20,34 +17,32 @@ type DatabaseTopology =
     { Database: Description<PostgresDatabaseResource>
       Migration: Description<ProjectResource> }
 
-let databaseTopology prefix password =
-    let databaseName = prefix + "-db"
-
-    let server =
-        postgresWithPassword (prefix + "-postgres") password { configure ignore }
-
-    let db = database databaseName server { configure ignore }
+let databaseTopology (scope: AppScope) =
+    let password = secretParameter "password"
+    let server = postgresWithPassword "postgres" password { configure ignore }
+    let db = database "db" server { configure ignore }
 
     let migration =
-        project (prefix + "-migration") migrationPath {
-            reference db
+        project "migration" migrationPath {
+            reference_as "appdb" db
             wait_for_child db
-            configure (configureMigration databaseName)
         }
 
-    { Database = db; Migration = migration }
+    appDefinition { migration },
+    { Database = scope.Export db
+      Migration = scope.Export migration }
 
 let describe args (instances: (string * string) list) =
     distributedApp {
         withArgs args
 
         for prefix, apiName in instances do
-            let password = secretParameter (prefix + "-password")
-            let topology = databaseTopology prefix password
+            let topology = AppHost.instantiate prefix databaseTopology
+            topology.Definition
 
             project apiName apiPath {
-                reference topology.Database
-                wait_for_completion topology.Migration
+                reference topology.Exports.Database
+                wait_for_completion topology.Exports.Migration
                 configure configureApi
             }
     }
@@ -63,8 +58,8 @@ let native args instances =
             builder.AddPostgres(prefix + "-postgres", password = password).AddDatabase(databaseName)
 
         let migration = builder.AddProject(prefix + "-migration", migrationPath)
-        migration.WithReference(db).WaitFor(db) |> ignore
-        configureMigration databaseName migration
+        let source = db :?> IResourceBuilder<IResourceWithConnectionString>
+        migration.WithReference(source, connectionName = "appdb").WaitFor(db) |> ignore
         let api = builder.AddProject(apiName, apiPath)
         api.WithReference(db).WaitForCompletion(migration) |> ignore
         configureApi api
@@ -79,10 +74,42 @@ let verifyDuplicatePrefix () =
         with :? InvalidOperationException as error ->
             Some error.Message
 
-    if collision <> Some "Conflicting resource name: blue-db" then
-        failwith "Expected a duplicate database name for the reused prefix."
+    if collision <> Some "Conflicting resource name: blue-migration" then
+        failwith "Expected a duplicate migration name for the reused prefix."
 
     printfn "PASS: reusing a prefix reports the conflicting resource name"
+
+let verifyNestedExports () =
+    let local = secretParameter "credential"
+
+    let credentialDefinition (scope: AppScope) =
+        appDefinition { local }, scope.Export local
+
+    let parent =
+        AppHost.instantiate "parent" (fun scope ->
+            let child = scope.Instantiate("child", credentialDefinition)
+            appDefinition { child.Definition }, child.Exports)
+
+    let sibling = AppHost.instantiate "sibling" credentialDefinition
+
+    let consumer =
+        AppHost.instantiate "consumer" (fun _ -> appDefinition { parent.Exports }, ())
+
+    let builder =
+        appDefinition {
+            consumer.Definition
+            parent.Definition
+            sibling.Definition
+        }
+        |> AppHost.build [||]
+
+    let names = builder.Resources |> Seq.map _.Name |> Seq.sort |> Seq.toList
+
+    if names <> [ "parent-child-credential"; "sibling-credential" ] then
+        failwith $"Unexpected scoped exports: {names}"
+
+    use app = builder.Build()
+    printfn "PASS: nested exports resolve in their owning scope across instances"
 
 [<EntryPoint>]
 let main args =
@@ -90,6 +117,7 @@ let main args =
 
     if Array.contains "--verify" args then
         verifyDuplicatePrefix ()
+        verifyNestedExports ()
         let builder = describe [||] instances
 
         for prefix, apiName in instances do
