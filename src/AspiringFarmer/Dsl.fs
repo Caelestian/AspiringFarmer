@@ -66,6 +66,20 @@ type ResourceBuilder<'T when 'T :> IResource>
                 state.Actions |> List.iter (fun action -> action registry resource)
                 resource }
 
+/// A named endpoint resolved against the application's native resource registry.
+type EndpointDescription = internal EndpointDescription of (Registry -> EndpointReference)
+
+type ContainerBuilder(name: string, image: string, tag: string) =
+    inherit
+        ResourceBuilder<ContainerResource>(
+            name,
+            fun (builder: IDistributedApplicationBuilder) -> builder.AddContainer(name, image, tag)
+        )
+
+    [<CustomOperation("http_endpoint")>]
+    member _.HttpEndpoint(state: ResourceState<ContainerResource>, name: string, targetPort: int) =
+        state.Add(fun _ resource -> resource.WithHttpEndpoint(targetPort = targetPort, name = name) |> ignore)
+
 type ProjectBuilder(name: string, path: string) =
     inherit ResourceBuilder<ProjectResource>(name, fun builder -> builder.AddProject(name, path))
 
@@ -100,6 +114,10 @@ type ProjectBuilder(name: string, path: string) =
     [<CustomOperation("wait_for_completion")>]
     member _.WaitForCompletion(state: ResourceState<ProjectResource>, dependency: Description<ProjectResource>) =
         state.Add(fun registry resource -> resource.WaitForCompletion(registry.Resolve dependency) |> ignore)
+
+    [<CustomOperation("endpoint_environment")>]
+    member _.EndpointEnvironment(state: ResourceState<ProjectResource>, name: string, EndpointDescription resolve) =
+        state.Add(fun registry resource -> resource.WithEnvironment(name, resolve registry) |> ignore)
 
     [<CustomOperation("external_http_endpoints")>]
     member _.ExternalHttpEndpoints(state: ResourceState<ProjectResource>) =
@@ -152,6 +170,11 @@ type DistributedAppBuilder() =
 [<AutoOpen>]
 module Builders =
     let project name path = ProjectBuilder(name, path)
+
+    let container name image tag = ContainerBuilder(name, image, tag)
+
+    let endpoint<'T when 'T :> IResourceWithEndpoints> name (resource: Description<'T>) =
+        EndpointDescription(fun registry -> (registry.Resolve resource).GetEndpoint name)
 
     let secretParameter name =
         let parameter =

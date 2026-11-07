@@ -13,6 +13,7 @@ cases = {
     "InvalidDatabaseParent": "PostgresServerResource",
     "InvalidSqlServerParent": "SqlServerServerResource",
     "InvalidCompletionWait": "ProjectResource",
+    "InvalidEndpoint": "IResourceWithEndpoints",
     "InvalidCallback": "ProjectResource",
 }
 
