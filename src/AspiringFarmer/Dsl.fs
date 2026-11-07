@@ -131,17 +131,48 @@ type AppItem =
     | Option of HostOption
     | Register of (Registry -> unit)
 
-type DistributedAppBuilder() =
+/// Resource registrations that can be included in any AppHost.
+type AppDefinition = internal AppDefinition of (Registry -> unit) list
+
+type AppItemsBuilder() =
     member _.Yield(description: Description<'T>) =
         [ Register(fun registry -> registry.Register description) ]
 
-    member _.Yield(option: HostOption) = [ Option option ]
+    member _.Yield(AppDefinition registrations) =
+        [ Register(fun registry -> List.iter (fun register -> register registry) registrations) ]
+
     member _.Zero() : AppItem list = []
     member _.Combine(left, right: unit -> AppItem list) = left @ right ()
     member _.Delay(body: unit -> AppItem list) = body
 
     member _.For(values: seq<'T>, body: 'T -> AppItem list) =
         values |> Seq.collect body |> Seq.toList
+
+type AppDefinitionBuilder() =
+    inherit AppItemsBuilder()
+
+    member _.Run(body: unit -> AppItem list) =
+        body ()
+        |> List.map (function
+            | Register register -> register
+            | Option _ -> invalidOp "Host options belong on the outer AppHost.")
+        |> AppDefinition
+
+module AppHost =
+    let build args (AppDefinition registrations) =
+        let builder = DistributedApplication.CreateBuilder(args: string array)
+        let registry = Registry builder
+        registrations |> List.iter (fun register -> register registry)
+        builder
+
+    let run (builder: IDistributedApplicationBuilder) =
+        use app = builder.Build()
+        app.Run()
+
+type DistributedAppBuilder() =
+    inherit AppItemsBuilder()
+
+    member _.Yield(option: HostOption) = [ Option option ]
 
     member _.Run(body: unit -> AppItem list) =
         let items = body ()
@@ -157,15 +188,14 @@ type DistributedAppBuilder() =
             | [ args ] -> args
             | _ -> invalidOp "withArgs can appear only once."
 
-        let builder = DistributedApplication.CreateBuilder args
-        let registry = Registry builder
+        let definition =
+            items
+            |> List.choose (function
+                | Register register -> Some register
+                | _ -> None)
+            |> AppDefinition
 
-        items
-        |> List.iter (function
-            | Register register -> register registry
-            | _ -> ())
-
-        builder
+        AppHost.build args definition
 
 [<AutoOpen>]
 module Builders =
@@ -186,4 +216,5 @@ module Builders =
         parameter.Run { Actions = [] }
 
     let withArgs args = Args(Array.copy args)
+    let appDefinition = AppDefinitionBuilder()
     let distributedApp = DistributedAppBuilder()
