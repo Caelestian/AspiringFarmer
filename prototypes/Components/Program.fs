@@ -37,9 +37,8 @@ let billingStandalone =
         billing upstream
     }
 
-let combined args =
-    distributedApp {
-        withArgs args
+let combined =
+    appDefinition {
         catalogDefinition
         billing catalogEndpointOwner
     }
@@ -60,16 +59,22 @@ let verify () =
 
     AppHost.build [||] catalogDefinition |> check [ "catalog" ]
     AppHost.build [||] billingStandalone |> check [ "billing"; "billing-catalog" ]
-    combined [||] |> check [ "catalog"; "billing" ]
+    let combinedHost = AppHost.build [| "--component-probe"; "combined" |] combined
+
+    if combinedHost.Configuration["component-probe"] <> "combined" then
+        failwith "Expected runner arguments in the combined AppHost configuration."
+
+    combinedHost |> check [ "catalog"; "billing" ]
 
     let collision =
         try
             let duplicate, _ = catalog "catalog"
 
-            distributedApp {
+            appDefinition {
                 catalogDefinition
                 duplicate
             }
+            |> AppHost.build [||]
             |> ignore
 
             None
@@ -89,13 +94,13 @@ let main args =
         let hostArgs =
             args |> Array.filter (fun arg -> arg <> "--catalog" && arg <> "--billing")
 
-        let builder =
+        let definition =
             match Array.contains "--catalog" args, Array.contains "--billing" args with
             | true, true -> invalidArg "args" "Select one standalone component."
-            | true, false -> AppHost.build hostArgs catalogDefinition
-            | false, true -> AppHost.build hostArgs billingStandalone
-            | false, false -> combined hostArgs
+            | true, false -> catalogDefinition
+            | false, true -> billingStandalone
+            | false, false -> combined
 
-        AppHost.run builder
+        definition |> AppHost.build hostArgs |> AppHost.run
 
     0

@@ -1,13 +1,14 @@
 # AppHost components
 
-An `appDefinition` collects resource declarations for later registration. Build a definition on its own with `AppHost.build args`, or include it as a bare expression in a parent `distributedApp`.
+An `appDefinition` collects resource declarations for later registration. Include component definitions as bare expressions in a parent definition. Pass command-line arguments to `AppHost.build` when launching either a standalone or a combined host.
 
 ```fsharp
-let app = distributedApp {
-    withArgs args
+let combined = appDefinition {
     catalogDefinition
     billing catalogEndpointOwner
 }
+
+combined |> AppHost.build args |> AppHost.run
 ```
 
 The parent creates one Aspire builder and registry. Definitions share the parent's resource names, configuration, and lifecycle. Billing uses the catalog's typed container description to wait for it and resolve its HTTP endpoint. The registry registers the catalog once even though billing also references it.
