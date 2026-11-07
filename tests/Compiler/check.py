@@ -11,6 +11,7 @@ cases = {
     "InvalidWait": "IResourceWithWaitSupport",
     "InvalidReference": "IResourceWithConnectionString",
     "InvalidDatabaseParent": "PostgresServerResource",
+    "InvalidSqlServerParent": "SqlServerServerResource",
     "InvalidCallback": "ProjectResource",
 }
 

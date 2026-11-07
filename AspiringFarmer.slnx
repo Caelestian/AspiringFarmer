@@ -10,10 +10,12 @@
     <Project Path="prototypes/NativeAspire/NativeAspire.fsproj" />
     <Project Path="prototypes/PostgreSQL/PostgreSQL.fsproj" />
     <Project Path="prototypes/Service/Service.fsproj" />
+    <Project Path="prototypes/SqlServer/SqlServer.fsproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/AspiringFarmer.PostgreSQL/AspiringFarmer.PostgreSQL.fsproj" />
     <Project Path="src/AspiringFarmer.Redis/AspiringFarmer.Redis.fsproj" />
+    <Project Path="src/AspiringFarmer.SqlServer/AspiringFarmer.SqlServer.fsproj" />
     <Project Path="src/AspiringFarmer/AspiringFarmer.fsproj" />
   </Folder>
   <Folder Name="/tests/">

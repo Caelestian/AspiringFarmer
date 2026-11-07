@@ -6,6 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/AspiringFarmer.Redis/AspiringFarmer.Redis.fsproj" />
     <ProjectReference Include="../../src/AspiringFarmer.PostgreSQL/AspiringFarmer.PostgreSQL.fsproj" />
+    <ProjectReference Include="../../src/AspiringFarmer.SqlServer/AspiringFarmer.SqlServer.fsproj" />
     <Compile Include="Cases/$(Case).fs" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../AspiringFarmer/AspiringFarmer.fsproj" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" />
+    <!-- Use the patched version of the dependency brought in by SQL Server. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+  <ItemGroup><Compile Include="SqlServer.fs" /></ItemGroup>
+</Project>
