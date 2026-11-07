@@ -16,10 +16,10 @@ let configureMigration fail (resource: IResourceBuilder<ProjectResource>) =
 let describe args =
     let fail = Array.contains "--fail-migration" args
 
-
     distributedApp {
         withArgs (args |> Array.filter ((<>) "--fail-migration"))
-        let server = postgres "postgres" { configure ignore }
+        let password = secretParameter "postgres-password"
+        let server = postgresWithPassword "postgres" password { configure ignore }
         let db = database "appdb" server { configure ignore }
 
         let migration =
@@ -38,7 +38,8 @@ let describe args =
 
 let native () =
     let builder = DistributedApplication.CreateBuilder [||]
-    let db = builder.AddPostgres("postgres").AddDatabase("appdb")
+    let password = builder.AddParameter("postgres-password", secret = true)
+    let db = builder.AddPostgres("postgres", password = password).AddDatabase("appdb")
 
     let migration =
         builder.AddProject("migration", "../PostgreSQL.Migration/PostgreSQL.Migration.fsproj")
@@ -89,8 +90,27 @@ let main args =
         if not (obj.ReferenceEquals(server, db.Parent)) then
             failwith "The database must share the registered PostgreSQL server."
 
+        let password =
+            builder.Resources
+            |> Seq.choose (function
+                | :? ParameterResource as parameter when parameter.Name = "postgres-password" -> Some parameter
+                | _ -> None)
+            |> Seq.exactlyOne
+
+        if
+            not password.Secret
+            || not (obj.ReferenceEquals(password, server.PasswordParameter))
+        then
+            failwith "The server must reference the registered secret parameter."
+
+        if
+            not (server.ConnectionStringExpression.ValueExpression.Contains("{postgres-password.value}"))
+            || not (db.ConnectionStringExpression.ValueExpression.Contains("{postgres.connectionString}"))
+        then
+            failwith "The database connection string must retain the deferred password reference."
+
         use app = builder.Build()
-        printfn "PASS: database parent, reference, and wait match native Aspire"
+        printfn "PASS: native topology and deferred secret references verified"
         0
     else
         use app = (describe args).Build()

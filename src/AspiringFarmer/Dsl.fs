@@ -152,5 +152,15 @@ type DistributedAppBuilder() =
 [<AutoOpen>]
 module Builders =
     let project name path = ProjectBuilder(name, path)
+
+    let secretParameter name =
+        let parameter =
+            ResourceBuilder<ParameterResource>(
+                name,
+                fun (builder: IDistributedApplicationBuilder) -> builder.AddParameter(name, secret = true)
+            )
+
+        parameter.Run { Actions = [] }
+
     let withArgs args = Args(Array.copy args)
     let distributedApp = DistributedAppBuilder()
