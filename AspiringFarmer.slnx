@@ -7,6 +7,7 @@
     <Project Path="benchmarks/Support/Support.csproj" />
   </Folder>
   <Folder Name="/prototypes/">
+    <Project Path="prototypes/Composition/Composition.fsproj" />
     <Project Path="prototypes/Container.Api/Container.Api.fsproj" />
     <Project Path="prototypes/Container/Container.fsproj" />
     <Project Path="prototypes/NativeAspire/NativeAspire.fsproj" />

@@ -3,11 +3,17 @@ open Npgsql
 
 [<EntryPoint>]
 let main args =
+    let databaseName =
+        match Environment.GetEnvironmentVariable("MIGRATION_DATABASE") with
+        | null
+        | "" -> "appdb"
+        | name -> name
+
     let connectionString =
-        Environment.GetEnvironmentVariable("ConnectionStrings__appdb")
+        Environment.GetEnvironmentVariable("ConnectionStrings__" + databaseName)
 
     if String.IsNullOrWhiteSpace connectionString then
-        eprintfn "Missing appdb connection string."
+        eprintfn "Missing migration database connection string."
         1
     else
         try
@@ -29,5 +35,5 @@ let main args =
             eprintfn "Migration SQL failed with SQLSTATE %s." error.SqlState
             1
         | :? NpgsqlException ->
-            eprintfn "Migration could not connect to appdb or execute SQL."
+            eprintfn "Migration could not connect to the database or execute SQL."
             1
