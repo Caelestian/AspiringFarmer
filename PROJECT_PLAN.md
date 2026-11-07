@@ -11,6 +11,11 @@ Native model and registry checks pass on both runtimes. Unsupported CE operation
 The [initial performance baseline](benchmarks/baseline-2026-11-06.md) compares native C#, native F#, and DSL models at 5, 25, and 100 declared resources.
 At 100 resources, the DSL's median additional construction time was 2.86 ms over native F# on the measured machine.
 The AppHost-edit source build exceeded the proposed 10% budget. Package-consumer isolation and native F# metadata-generation behavior need further investigation.
+Runtime construction and allocation measurements now use BenchmarkDotNet. The initial custom-harness results remain exploratory historical data.
+The [warmed BenchmarkDotNet comparison](benchmarks/benchmarkdotnet-2026-11-06.md) measured 81.61 ms mean construction time for the DSL at 100 resources versus 79.95 ms for native F#, with overlapping error ranges.
+Python remains responsible for external build and fresh-process measurements. See the [no-change build investigation](benchmarks/no-change-builds.md).
+The [package-consumer experiment](benchmarks/package-consumers-2026-11-06.md) measured lower median build costs with local packages: 7.4% for unchanged builds, 12.9% for AppHost edits, and 53.4% for graph rebuilds.
+Seven interleaved samples were noisy for incremental builds. Package consumers and source consumers produced equivalent models and used byte-identical library binaries.
 
 ## Purpose
 

@@ -1,0 +1,137 @@
+{
+  "environment": {
+    "sdk": "10.0.400",
+    "dotnetInfo": ".NET SDK:\n Version:           10.0.400\n Commit:            14fbf8d527\n Workload version:  10.0.400.1\n MSBuild version:   18.9.6+14fbf8d52\n\nRuntime Environment:\n OS Name:     Mac OS X\n OS Version:  27.2\n OS Platform: Darwin\n RID:         osx-arm64\n Base Path:   /usr/local/share/dotnet/sdk/10.0.400/\n\n.NET workloads installed:\nThere are no installed workloads to display.\nConfigured to use workload sets when installing new manifests.\n\nHost:\n  Version:      11.0.0-rc.3.26522.148\n  Architecture: arm64\n  Commit:       5254d8bcf5\n\n.NET SDKs installed:\n  8.0.100-rc.1.23463.5 [/usr/local/share/dotnet/sdk]\n  8.0.100 [/usr/local/share/dotnet/sdk]\n  10.0.400 [/usr/local/share/dotnet/sdk]\n  11.0.100-rc.3.26522.148 [/usr/local/share/dotnet/sdk]\n\n.NET runtimes installed:\n  Microsoft.AspNetCore.App 8.0.0-rc.1.23421.29 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]\n  Microsoft.AspNetCore.App 8.0.0 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]\n  Microsoft.AspNetCore.App 10.0.11 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]\n  Microsoft.AspNetCore.App 11.0.0-rc.3.26522.148 [/usr/local/share/dotnet/shared/Microsoft.AspNetCore.App]\n  Microsoft.NETCore.App 8.0.0-rc.1.23419.4 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]\n  Microsoft.NETCore.App 8.0.0 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]\n  Microsoft.NETCore.App 10.0.11 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]\n  Microsoft.NETCore.App 11.0.0-rc.3.26522.148 [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]\n\nOther architectures found:\n  x64   [/usr/local/share/dotnet/x64]\n    registered at [/etc/dotnet/install_location_x64]\n\nEnvironment variables:\n  Not set\n\nglobal.json file:\n  /Users/erics/Documents/GitHub/AspiringFarmer/global.json\n\nLearn more:\n  https://aka.ms/dotnet/info\n\nDownload .NET:\n  https://aka.ms/dotnet/download\n",
+    "revision": "8389d788c03ee254e3d6734702c23d07efda1a9a",
+    "status": " M AspiringFarmer.slnx\n M Directory.Packages.props\n M PROJECT_PLAN.md\n M benchmarks/DslFSharp/Program.fs\n M benchmarks/NativeCSharp/Program.cs\n M benchmarks/NativeFSharp/Program.fs\n M benchmarks/README.md\n M benchmarks/Support/Measure.cs\n M benchmarks/baseline-2026-11-06.md\n M benchmarks/run.py\n?? benchmarks/DslPackagedFSharp/\n?? benchmarks/Runtime/\n?? benchmarks/benchmarkdotnet-2026-11-06.md\n?? benchmarks/no-change-builds.md\n?? benchmarks/packages.py\n?? benchmarks/results/2026-11-06-benchmarkdotnet.json\n",
+    "utc": "2026-11-06T21:15:52.425647+00:00",
+    "packageVersion": "0.0.0-benchmark.20261106211520743591",
+    "samples": 7,
+    "configuration": "Release",
+    "cache": "restored dependencies and warm outputs; package creation/restore excluded"
+  },
+  "builds": {
+    "DslFSharp": {
+      "noChangeMs": {
+        "n": 7,
+        "median": 1166.8287920765579,
+        "p95": 1970.8639580057934,
+        "min": 1085.5814999667928,
+        "max": 1970.8639580057934
+      },
+      "appHostEditMs": {
+        "n": 7,
+        "median": 2648.943957989104,
+        "p95": 3284.3681250233203,
+        "min": 2372.110791038722,
+        "max": 3284.3681250233203
+      },
+      "rebuildGraphMs": {
+        "n": 7,
+        "median": 8871.112667024136,
+        "p95": 9862.41487506777,
+        "min": 7954.008791013621,
+        "max": 9862.41487506777
+      },
+      "raw": {
+        "noChangeMs": [
+          1970.8639580057934,
+          1732.227124972269,
+          1587.5354160089046,
+          1166.8287920765579,
+          1127.7311249868944,
+          1085.5814999667928,
+          1096.3558750227094
+        ],
+        "appHostEditMs": [
+          2536.769500002265,
+          3284.3681250233203,
+          2585.374457994476,
+          2696.8607919989154,
+          2835.1232919376343,
+          2648.943957989104,
+          2372.110791038722
+        ],
+        "rebuildGraphMs": [
+          9862.41487506777,
+          8871.112667024136,
+          8548.338166088797,
+          9205.740542034619,
+          7954.008791013621,
+          8006.593208061531,
+          8919.178290991113
+        ],
+        "noChangeOutputChanges": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
+      }
+    },
+    "DslPackagedFSharp": {
+      "noChangeMs": {
+        "n": 7,
+        "median": 1080.9640838997439,
+        "p95": 1950.0197500456125,
+        "min": 1003.0997910071164,
+        "max": 1950.0197500456125
+      },
+      "appHostEditMs": {
+        "n": 7,
+        "median": 2308.0229579936713,
+        "p95": 3051.0062919929624,
+        "min": 2282.0376669988036,
+        "max": 3051.0062919929624
+      },
+      "rebuildGraphMs": {
+        "n": 7,
+        "median": 4135.580916074105,
+        "p95": 4853.561374940909,
+        "min": 2999.202042003162,
+        "max": 4853.561374940909
+      },
+      "raw": {
+        "noChangeMs": [
+          1675.3764169989154,
+          1950.0197500456125,
+          1364.091166993603,
+          1080.9640838997439,
+          1004.3671249877661,
+          1007.6021250570193,
+          1003.0997910071164
+        ],
+        "appHostEditMs": [
+          2308.0229579936713,
+          2283.499165903777,
+          2287.4149159761146,
+          2811.30029191263,
+          3051.0062919929624,
+          2890.4245409648865,
+          2282.0376669988036
+        ],
+        "rebuildGraphMs": [
+          3384.4301250064746,
+          4853.561374940909,
+          4141.11912494991,
+          2999.202042003162,
+          4135.580916074105,
+          3906.6047909436747,
+          4228.474166011438
+        ],
+        "noChangeOutputChanges": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
+      }
+    }
+  }
+}

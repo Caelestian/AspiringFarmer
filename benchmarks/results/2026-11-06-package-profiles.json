@@ -1,0 +1,44 @@
+{
+  "packageVersion": "0.0.0-benchmark.20261106211520743591",
+  "binaryIdentityChecks": {
+    "AspiringFarmer": {
+      "sha256": "b1380aa95e000f0ed75c007d493d0c7c1959150fb1b13f1bbd9754e7e2255ad1",
+      "matchesSourceOutput": true
+    },
+    "AspiringFarmer.Redis": {
+      "sha256": "878185f1113b07003bda1ad8ab283869a28edff0a806a23165da9ed19477ec08",
+      "matchesSourceOutput": true
+    }
+  },
+  "profileSummary": {
+    "DslFSharp": {
+      "fsc": {
+        "milliseconds": 1836,
+        "calls": 1
+      },
+      "projectReferences": {
+        "milliseconds": 1017,
+        "calls": 4
+      },
+      "resolveAssemblies": {
+        "milliseconds": 258,
+        "calls": 4
+      }
+    },
+    "DslPackagedFSharp": {
+      "fsc": {
+        "milliseconds": 1800,
+        "calls": 1
+      },
+      "projectReferences": {
+        "milliseconds": 235,
+        "calls": 2
+      },
+      "resolveAssemblies": {
+        "milliseconds": 90,
+        "calls": 2
+      }
+    }
+  },
+  "timingNote": "Separate diagnostic builds. Durations can overlap; do not sum them or compare directly to quiet build samples."
+}

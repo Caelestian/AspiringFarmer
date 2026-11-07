@@ -1,4 +1,4 @@
-"""Measure restored Release builds and equivalent Aspire application models."""
+"""Measure external Release builds and fresh-process totals; runtime benchmarks use BenchmarkDotNet."""
 import argparse
 import json
 import math
@@ -33,10 +33,10 @@ def summary(values):
     }
 
 
-def model(name, count, iterations):
+def model(name, count):
     dll = ROOT / f"benchmarks/{name}/bin/Release/net10.0/{name}.dll"
     started = time.perf_counter()
-    report = json.loads(command(["dotnet", str(dll), str(count), str(iterations)]))
+    report = json.loads(command(["dotnet", str(dll), str(count)]))
     return report, (time.perf_counter() - started) * 1000
 
 
@@ -61,13 +61,11 @@ def dll_stamps():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--iterations", type=int, default=15)
-    parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--fresh-processes", type=int, default=5)
     parser.add_argument("--build-samples", type=int, default=5)
     parser.add_argument("--output", type=Path, default=ROOT / "benchmarks/results/local.json")
     options = parser.parse_args()
-    if min(options.iterations, options.rounds, options.fresh_processes, options.build_samples) < 1:
+    if min(options.fresh_processes, options.build_samples) < 1:
         parser.error("sample counts must be positive")
 
     rng = random.Random(42)
@@ -87,44 +85,32 @@ def main():
             "cache": "restored packages, existing build outputs; OS caches not cleared",
             "arguments": vars(options) | {"output": str(options.output)},
         },
-        "models": {},
+        "processes": {},
         "builds": {},
     }
 
     for count in [5, 25, 100]:
-        samples = {name: [] for name in NAMES}
         cold = {name: [] for name in NAMES}
         fingerprints = set()
-        for _ in range(options.rounds):
-            order = NAMES.copy()
-            rng.shuffle(order)
-            for name in order:
-                report, _ = model(name, count, options.iterations)
-                fingerprints.add(report["fingerprint"])
-                samples[name].extend(report["samples"])
         for _ in range(options.fresh_processes):
             order = NAMES.copy()
             rng.shuffle(order)
             for name in order:
-                report, elapsed = model(name, count, 1)
+                report, elapsed = model(name, count)
                 fingerprints.add(report["fingerprint"])
                 cold[name].append(elapsed)
         if len(fingerprints) != 1:
             raise RuntimeError(f"Model fingerprints differ at {count} declared resources")
-        results["models"][count] = {
+        results["processes"][count] = {
             name: {
-                "constructionMs": summary([sample["constructionMs"] for sample in samples[name]]),
-                "constructionBytes": summary([sample["constructionBytes"] for sample in samples[name]]),
-                "hostBuildMs": summary([sample["buildMs"] for sample in samples[name]]),
                 "freshProcessTotalMs": summary(cold[name]),
-                "raw": samples[name],
                 "rawFreshProcessTotalMs": cold[name],
             }
             for name in NAMES
         }
         print(f"PASS: equivalent models measured at {count} declared resources", flush=True)
 
-    # Builds are measured after model runs, and edits are restored even on failure.
+    # Builds are measured after fresh-process runs, and edits are restored even on failure.
     for name in NAMES:
         build(name)
     raw = {name: {"noChangeMs": [], "appHostEditMs": [], "rebuildGraphMs": []} for name in NAMES}

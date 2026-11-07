@@ -1,3 +1,5 @@
+module AspiringFarmer.Benchmarks.NativeFSharpModel
+
 open Aspire.Hosting
 open AspiringFarmer.Benchmarks
 

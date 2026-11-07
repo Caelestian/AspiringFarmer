@@ -1,3 +1,5 @@
+module AspiringFarmer.Benchmarks.DslFSharpModel
+
 open AspiringFarmer
 open AspiringFarmer.Redis
 open AspiringFarmer.Benchmarks

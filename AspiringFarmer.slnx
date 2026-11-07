@@ -3,6 +3,7 @@
     <Project Path="benchmarks/DslFSharp/DslFSharp.fsproj" />
     <Project Path="benchmarks/NativeCSharp/NativeCSharp.csproj" />
     <Project Path="benchmarks/NativeFSharp/NativeFSharp.fsproj" />
+    <Project Path="benchmarks/Runtime/Runtime.csproj" />
     <Project Path="benchmarks/Support/Support.csproj" />
   </Folder>
   <Folder Name="/prototypes/">

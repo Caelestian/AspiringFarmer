@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.6.4" />
+  <Import Project="../../artifacts/package-consumer/Packages.props" Condition="Exists('../../artifacts/package-consumer/Packages.props')" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsAspireHost>true</IsAspireHost>
+    <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(MSBuildThisFileDirectory)../../artifacts/package-consumer/feed</RestoreAdditionalProjectSources>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="AspiringFarmer.Redis" Version="$(BenchmarkPackageVersion)" />
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="AspiringFarmer.Redis" />
+    <ProjectReference Include="../Support/Support.csproj" IsAspireProjectResource="false" />
+    <Compile Include="../DslFSharp/Program.fs" Link="Program.fs" />
+  </ItemGroup>
+  <Target Name="RequireBenchmarkPackages" BeforeTargets="CollectPackageReferences;PrepareForBuild" Condition="'$(BenchmarkPackageVersion)' == ''">
+    <Error Text="Run python3 benchmarks/packages.py to create the local benchmark packages first." />
+  </Target>
+</Project>
