@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/AspiringFarmer.Redis/AspiringFarmer.Redis.fsproj" />
+    <ProjectReference Include="../../src/AspiringFarmer.PostgreSQL/AspiringFarmer.PostgreSQL.fsproj" />
     <Compile Include="Cases/$(Case).fs" />
   </ItemGroup>
 </Project>

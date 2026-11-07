@@ -8,9 +8,11 @@
   </Folder>
   <Folder Name="/prototypes/">
     <Project Path="prototypes/NativeAspire/NativeAspire.fsproj" />
+    <Project Path="prototypes/PostgreSQL/PostgreSQL.fsproj" />
     <Project Path="prototypes/Service/Service.fsproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/AspiringFarmer.PostgreSQL/AspiringFarmer.PostgreSQL.fsproj" />
     <Project Path="src/AspiringFarmer.Redis/AspiringFarmer.Redis.fsproj" />
     <Project Path="src/AspiringFarmer/AspiringFarmer.fsproj" />
   </Folder>

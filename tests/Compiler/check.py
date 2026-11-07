@@ -10,6 +10,7 @@ cases = {
     "InvalidVolume": "error FS0708",
     "InvalidWait": "IResourceWithWaitSupport",
     "InvalidReference": "IResourceWithConnectionString",
+    "InvalidDatabaseParent": "PostgresServerResource",
     "InvalidCallback": "ProjectResource",
 }
 

@@ -47,7 +47,10 @@ type ResourceState<'T when 'T :> IResource> =
 
 /// Base for typed resource expressions, including third-party resource factories.
 type ResourceBuilder<'T when 'T :> IResource>
-    (name: string, create: IDistributedApplicationBuilder -> IResourceBuilder<'T>) =
+    (name: string, create: IDistributedApplicationBuilder -> Registry -> IResourceBuilder<'T>) =
+    new(name, create: IDistributedApplicationBuilder -> IResourceBuilder<'T>) =
+        ResourceBuilder<'T>(name, fun builder _ -> create builder)
+
     member _.Yield(()) : ResourceState<'T> = { Actions = [] }
 
     [<CustomOperation("configure")>]
@@ -59,7 +62,7 @@ type ResourceBuilder<'T when 'T :> IResource>
           Name = name
           Create =
             fun builder registry ->
-                let resource = create builder
+                let resource = create builder registry
                 state.Actions |> List.iter (fun action -> action registry resource)
                 resource }
 
@@ -87,6 +90,12 @@ type ProjectBuilder(name: string, path: string) =
         { Actions =
             state.Actions
             @ [ fun registry resource -> resource.WaitFor(registry.Resolve dependency) |> ignore ] }
+
+    [<CustomOperation("wait_for_child")>]
+    member _.WaitForChild<'T when 'T :> IResource and 'T :> IResourceWithParent>
+        (state: ResourceState<ProjectResource>, dependency: Description<'T>)
+        =
+        state.Add(fun registry resource -> resource.WaitFor(registry.Resolve dependency) |> ignore)
 
     [<CustomOperation("external_http_endpoints")>]
     member _.ExternalHttpEndpoints(state: ResourceState<ProjectResource>) =
