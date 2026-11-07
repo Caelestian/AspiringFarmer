@@ -7,7 +7,7 @@ open AspiringFarmer
 open AspiringFarmer.Redis
 
 let configureProject (resource: IResourceBuilder<ProjectResource>) =
-    resource.WithHttpEndpoint(targetPort = 8080, name = "http") |> ignore
+    resource.WithHttpEndpoint(name = "http") |> ignore
     resource.WithEnvironment("PROTOTYPE", "native-callback") |> ignore
     resource.WithHttpHealthCheck("/health") |> ignore
 

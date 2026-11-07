@@ -91,4 +91,4 @@ The registry validates during materialization; a failed description can leave a 
 Descriptions do not yet support a separate validation pass or rollback.
 
 The [initial performance baseline](../../benchmarks/baseline-2026-11-06.md) measures model construction and source-project builds.
-Dashboard/application startup timing, full startup under .NET 11, and stable .NET 11 verification remain outstanding.
+The [startup comparison](../../benchmarks/startup-2026-11-07.md) records dashboard and resource readiness on .NET 10. Full startup under .NET 11 and stable .NET 11 verification remain outstanding.

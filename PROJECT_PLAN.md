@@ -16,6 +16,7 @@ The [warmed BenchmarkDotNet comparison](benchmarks/benchmarkdotnet-2026-11-06.md
 Python remains responsible for external build and fresh-process measurements. See the [no-change build investigation](benchmarks/no-change-builds.md).
 The [package-consumer experiment](benchmarks/package-consumers-2026-11-06.md) measured lower median build costs with local packages: 7.4% for unchanged builds, 12.9% for AppHost edits, and 53.4% for graph rebuilds.
 Seven interleaved samples were noisy for incremental builds. Package consumers and source consumers produced equivalent models and used byte-identical library binaries.
+The [startup comparison](benchmarks/startup-2026-11-07.md) records local CLI launch and resource readiness for the prebuilt Debug AppHost. Median times were about 3 seconds for the dashboard and 8.3 seconds for all three resources in both modes.
 
 ## Purpose
 

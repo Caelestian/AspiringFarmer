@@ -68,6 +68,8 @@ No-change reports also record rewritten DLLs, exposing unintended recompilation.
 
 ## Recorded findings
 
+The [startup comparison](startup-2026-11-07.md) measures dashboard and resource readiness for the runnable sample.
+
 The [warmed BenchmarkDotNet comparison](benchmarkdotnet-2026-11-06.md) records the first complete runtime suite with allocation diagnostics.
 The [package-consumer results](package-consumers-2026-11-06.md) isolate library source-project costs in consumer builds.
 
