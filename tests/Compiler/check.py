@@ -12,6 +12,7 @@ cases = {
     "InvalidReference": "IResourceWithConnectionString",
     "InvalidDatabaseParent": "PostgresServerResource",
     "InvalidSqlServerParent": "SqlServerServerResource",
+    "InvalidCompletionWait": "ProjectResource",
     "InvalidCallback": "ProjectResource",
 }
 

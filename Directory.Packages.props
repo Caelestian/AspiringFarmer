@@ -3,6 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="Npgsql" Version="8.0.3" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="FSharp.Core" Version="10.1.400" />
     <PackageVersion Include="Aspire.Hosting" Version="13.6.4" />

@@ -9,24 +9,43 @@ let configureApi (resource: IResourceBuilder<ProjectResource>) =
     resource.WithHttpEndpoint(name = "http").WithHttpHealthCheck("/health")
     |> ignore
 
+let configureMigration fail (resource: IResourceBuilder<ProjectResource>) =
+    if fail then
+        resource.WithArgs("--fail") |> ignore
+
 let describe args =
+    let fail = Array.contains "--fail-migration" args
+
+
     distributedApp {
-        withArgs args
-        let server = postgres "postgres" { data_volume }
+        withArgs (args |> Array.filter ((<>) "--fail-migration"))
+        let server = postgres "postgres" { configure ignore }
         let db = database "appdb" server { configure ignore }
+
+        let migration =
+            project "migration" "../PostgreSQL.Migration/PostgreSQL.Migration.fsproj" {
+                reference db
+                wait_for_child db
+                configure (configureMigration fail)
+            }
 
         project "api" "../Service/Service.fsproj" {
             reference db
-            wait_for_child db
+            wait_for_completion migration
             configure configureApi
         }
     }
 
 let native () =
     let builder = DistributedApplication.CreateBuilder [||]
-    let db = builder.AddPostgres("postgres").WithDataVolume().AddDatabase("appdb")
+    let db = builder.AddPostgres("postgres").AddDatabase("appdb")
+
+    let migration =
+        builder.AddProject("migration", "../PostgreSQL.Migration/PostgreSQL.Migration.fsproj")
+
+    migration.WithReference(db).WaitFor(db) |> ignore
     let api = builder.AddProject("api", "../Service/Service.fsproj")
-    api.WithReference(db).WaitFor(db) |> ignore
+    api.WithReference(db).WaitForCompletion(migration) |> ignore
     configureApi api
     builder
 
@@ -34,7 +53,7 @@ let relationships (resource: IResource) =
     resource.Annotations
     |> Seq.choose (function
         | :? ResourceRelationshipAnnotation as relationship -> Some(relationship.Type, relationship.Resource.Name)
-        | :? WaitAnnotation as wait -> Some(string wait.WaitType, wait.Resource.Name)
+        | :? WaitAnnotation as wait -> Some($"{wait.WaitType}:{wait.ExitCode}", wait.Resource.Name)
         | _ -> None)
     |> Seq.sort
     |> Seq.toList

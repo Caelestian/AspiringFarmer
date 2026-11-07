@@ -97,6 +97,10 @@ type ProjectBuilder(name: string, path: string) =
         =
         state.Add(fun registry resource -> resource.WaitFor(registry.Resolve dependency) |> ignore)
 
+    [<CustomOperation("wait_for_completion")>]
+    member _.WaitForCompletion(state: ResourceState<ProjectResource>, dependency: Description<ProjectResource>) =
+        state.Add(fun registry resource -> resource.WaitForCompletion(registry.Resolve dependency) |> ignore)
+
     [<CustomOperation("external_http_endpoints")>]
     member _.ExternalHttpEndpoints(state: ResourceState<ProjectResource>) =
         { Actions =
