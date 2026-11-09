@@ -8,5 +8,8 @@
     <PackageReference Include="Aspire.Hosting.AppHost" ExcludeAssets="build;buildTransitive" />
     <PackageReference Include="FSharp.Aspire.Hosting.AppHost" ExcludeAssets="build;buildTransitive" />
   </ItemGroup>
-  <ItemGroup><Compile Include="Dsl.fs" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="Dsl.fs" />
+    <Compile Include="Mermaid.fs" />
+  </ItemGroup>
 </Project>

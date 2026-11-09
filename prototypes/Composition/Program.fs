@@ -3,6 +3,7 @@ module Composition.Program
 open System
 open Aspire.Hosting
 open Aspire.Hosting.ApplicationModel
+open Aspire.Hosting.Docker.Resources.ServiceNodes
 open AspiringFarmer
 open AspiringFarmer.PostgreSQL
 
@@ -141,12 +142,44 @@ let main args =
         printfn "PASS: each API waits for its own migration"
         0
     else
+        let hostArgs =
+            args
+            |> Array.filter (fun arg -> arg <> "--native" && arg <> "--compose" && arg <> "--mermaid")
+
         let builder =
             if Array.contains "--native" args then
-                native (Array.filter ((<>) "--native") args) instances
+                native hostArgs instances
             else
-                describe args instances
+                describe hostArgs instances
 
-        use app = builder.Build()
-        app.Run()
+        if Array.contains "--compose" args then
+            builder
+                .AddDockerComposeEnvironment("compose")
+                .ConfigureComposeFile(fun compose ->
+                    for prefix, _ in instances do
+                        let postgresName = prefix + "-postgres"
+                        let postgres = compose.Services[postgresName]
+                        postgres.Environment["POSTGRES_DB"] <- prefix + "-db"
+
+                        postgres.Healthcheck <-
+                            Healthcheck(
+                                Test =
+                                    Collections.Generic.List<string>(
+                                        [ "CMD"; "pg_isready"; "-h"; "127.0.0.1"; "-U"; "postgres" ]
+                                    ),
+                                Interval = "2s",
+                                Timeout = "3s",
+                                StartPeriod = "5s",
+
+                                Retries = Nullable 30
+                            )
+
+                        compose.Services[prefix + "-migration"].DependsOn[postgresName].Condition <- "service_healthy")
+            |> ignore
+
+        if Array.contains "--mermaid" args then
+            printfn "%s" (Mermaid.export builder)
+        else
+            AppHost.run builder
+
         0
