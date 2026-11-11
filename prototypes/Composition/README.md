@@ -61,4 +61,75 @@ The publish command writes `docker-compose.yaml` and an `.env` template. Supply 
 
 The Compose configuration sets `POSTGRES_DB` for each server. Each migration waits for its server's TCP health check. Aspire emits `service_completed_successfully` for each API's migration dependency. Each branch uses its own database host and password input.
 
-Docker Compose validated the generated configuration and both dependency chains. Runtime verification covered the local Aspire sample in the earlier composition experiment.
+### Run the published sample locally
+
+Publish the two projects and build their local images from the repository root.
+
+```sh
+output=/tmp/composition-compose
+dotnet publish prototypes/Service -c Release -o "$output/service"
+dotnet publish prototypes/PostgreSQL.Migration -c Release -o "$output/migration"
+
+docker build -t aspiringfarmer-compose-service:local -f - "$output/service" <<'EOF'
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY . .
+ENTRYPOINT ["dotnet", "Service.dll"]
+EOF
+
+docker build -t aspiringfarmer-compose-migration:local -f - "$output/migration" <<'EOF'
+FROM mcr.microsoft.com/dotnet/runtime:10.0
+WORKDIR /app
+COPY . .
+ENTRYPOINT ["dotnet", "PostgreSQL.Migration.dll"]
+EOF
+```
+
+Set the image names, container ports, and temporary passwords in your shell.
+Use an override to assign each API a free loopback port.
+
+```sh
+cd "$output"
+export BLUE_API_IMAGE=aspiringfarmer-compose-service:local GREEN_API_IMAGE=aspiringfarmer-compose-service:local
+export BLUE_MIGRATION_IMAGE=aspiringfarmer-compose-migration:local GREEN_MIGRATION_IMAGE=aspiringfarmer-compose-migration:local
+export BLUE_API_PORT=8080 GREEN_API_PORT=8080
+export BLUE_PASSWORD="$(openssl rand -hex 24)"
+export GREEN_PASSWORD="$(openssl rand -hex 24)"
+
+cat > ports.yaml <<'EOF'
+services:
+  blue-api:
+    ports: ["127.0.0.1::8080"]
+  green-api:
+    ports: ["127.0.0.1::8080"]
+EOF
+
+compose() { docker compose -f docker-compose.yaml -f ports.yaml "$@"; }
+compose -p composition-success up -d
+compose -p composition-success ps -a
+curl --fail --retry 5 --retry-connrefused "http://$(compose -p composition-success port blue-api 8080)/health"
+curl --fail --retry 5 --retry-connrefused "http://$(compose -p composition-success port green-api 8080)/health"
+compose -p composition-success down -v
+```
+
+Both migrations exited with code 0 and created `migration_example` in their own databases. Each API started after its migration finished and returned HTTP 200.
+
+### Check a failed migration
+
+Use a fresh Compose project and pass `--fail` to the blue migration.
+
+```sh
+cat > failure.yaml <<'EOF'
+services:
+  blue-migration:
+    command: ["--fail"]
+EOF
+
+compose -p composition-failure -f failure.yaml up -d
+compose -p composition-failure -f failure.yaml ps -a
+compose -p composition-failure -f failure.yaml logs blue-migration
+curl --fail --retry 5 --retry-connrefused "http://$(compose -p composition-failure -f failure.yaml port green-api 8080)/health"
+compose -p composition-failure -f failure.yaml down -v
+```
+
+In the Docker Compose v5.5.0 run, `up` returned exit code 1. The blue migration reported SQLSTATE `42P01`, and the blue API stayed in the `created` state. The green migration created its table, and the green API returned HTTP 200.
