@@ -176,6 +176,14 @@ type ProjectBuilder(name: string, path: string) =
     member _.EndpointEnvironment(state: ResourceState<ProjectResource>, name: string, EndpointDescription resolve) =
         state.Add(fun registry resource -> resource.WithEnvironment(name, resolve registry) |> ignore)
 
+    [<CustomOperation("http_endpoint")>]
+    member _.HttpEndpoint(state: ResourceState<ProjectResource>, name: string) =
+        state.Add(fun _ resource -> resource.WithHttpEndpoint(name = name) |> ignore)
+
+    [<CustomOperation("http_health_check")>]
+    member _.HttpHealthCheck(state: ResourceState<ProjectResource>, endpointName: string, path: string) =
+        state.Add(fun _ resource -> resource.WithHttpHealthCheck(path, endpointName = endpointName) |> ignore)
+
     [<CustomOperation("external_http_endpoints")>]
     member _.ExternalHttpEndpoints(state: ResourceState<ProjectResource>) =
         { Actions =

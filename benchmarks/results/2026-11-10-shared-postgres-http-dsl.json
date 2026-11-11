@@ -1,0 +1,120 @@
+{
+  "environment": {
+    "platform": "macOS-27.2-arm64-arm-64bit-Mach-O",
+    "dotnetSdk": "10.0.400",
+    "dockerServer": "29.8.2"
+  },
+  "medianMs": {
+    "cleanBuildMs": 5336.970665957779,
+    "noChangeBuildMs": 783.061166992411,
+    "appHostStartedMs": 9779.020000016317,
+    "allResourcesReadyMs": 12650.730124907568
+  },
+  "samples": [
+    {
+      "cleanBuildMs": 6111.691874917597,
+      "noChangeBuildMs": 946.2357091251761,
+      "appHostStartedMs": 9825.602582888678,
+      "allResourcesReadyMs": 11954.68045794405,
+      "resourceReadyMs": {
+        "postgres": 4816.406374797225,
+        "orders": 6735.44487496838,
+        "inventory": 6735.457707894966,
+        "reporting": 6735.683541977778,
+        "identity": 6738.795624813065,
+        "catalog": 6739.193916786462,
+        "identity-schema": 9668.574541807175,
+        "inventory-schema": 9765.837999992073,
+        "catalog-schema": 9818.859957857057,
+        "orders-schema": 9818.873041775078,
+        "reporting-schema": 9818.873749813065,
+        "back-office": 11713.11220782809,
+        "storefront": 11954.390041995794
+      }
+    },
+    {
+      "cleanBuildMs": 5336.970665957779,
+      "noChangeBuildMs": 836.85233280994,
+      "appHostStartedMs": 9779.020000016317,
+      "allResourcesReadyMs": 12738.383708056062,
+      "resourceReadyMs": {
+        "postgres": 4775.912791956216,
+        "identity": 6690.425750100985,
+        "catalog": 6690.430541988462,
+        "inventory": 6690.431792056188,
+        "reporting": 6690.558457979932,
+        "orders": 6692.430499941111,
+        "catalog-schema": 9731.064042076468,
+        "orders-schema": 9731.311707990244,
+        "reporting-schema": 9757.496417034417,
+        "identity-schema": 9771.58399997279,
+        "inventory-schema": 9771.632750052959,
+        "back-office": 11871.907541994005,
+        "storefront": 12737.709833076224
+      }
+    },
+    {
+      "cleanBuildMs": 5397.819791920483,
+      "noChangeBuildMs": 772.8847088292241,
+      "appHostStartedMs": 9602.227583993226,
+      "allResourcesReadyMs": 11949.966500047594,
+      "resourceReadyMs": {
+        "postgres": 4728.860708884895,
+        "catalog": 6648.858624976128,
+        "reporting": 6648.871917044744,
+        "inventory": 6648.966166889295,
+        "identity": 6652.556834043935,
+        "orders": 6653.552291914821,
+        "inventory-schema": 9555.469542043284,
+        "orders-schema": 9573.25387489982,
+        "identity-schema": 9573.317291913554,
+        "catalog-schema": 9576.37245906517,
+        "reporting-schema": 9597.363417036831,
+        "storefront": 11945.264583919197,
+        "back-office": 11949.703084072098
+      }
+    },
+    {
+      "cleanBuildMs": 5065.919499844313,
+      "noChangeBuildMs": 783.061166992411,
+      "appHostStartedMs": 9956.220833119005,
+      "allResourcesReadyMs": 12822.949416935444,
+      "resourceReadyMs": {
+        "postgres": 4744.597708107904,
+        "reporting": 6660.436999984086,
+        "identity": 6660.459333099425,
+        "inventory": 6660.493541974574,
+        "orders": 6660.499042132869,
+        "catalog": 6665.426958119497,
+        "identity-schema": 9945.194249972701,
+        "catalog-schema": 9946.597707923502,
+        "inventory-schema": 9948.898042086512,
+        "orders-schema": 9948.996291961521,
+        "reporting-schema": 9950.774499913678,
+        "storefront": 11854.597375029698,
+        "back-office": 12822.48608302325
+      }
+    },
+    {
+      "cleanBuildMs": 5255.6139579974115,
+      "noChangeBuildMs": 769.2051669582725,
+      "appHostStartedMs": 9729.427249869332,
+      "allResourcesReadyMs": 12650.730124907568,
+      "resourceReadyMs": {
+        "postgres": 4675.138499820605,
+        "catalog": 6591.1269169300795,
+        "identity": 6591.187875019386,
+        "orders": 6592.095084022731,
+        "inventory": 6593.455167021602,
+        "reporting": 6593.456750037149,
+        "orders-schema": 9456.636041868478,
+        "inventory-schema": 9556.644291849807,
+        "reporting-schema": 9689.62045898661,
+        "catalog-schema": 9712.96179201454,
+        "identity-schema": 9724.45624996908,
+        "back-office": 11582.78249995783,
+        "storefront": 12650.420208927244
+      }
+    }
+  ]
+}

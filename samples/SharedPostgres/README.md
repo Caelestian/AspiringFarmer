@@ -53,4 +53,6 @@ Five runs on November 10, 2026 used an Apple M2 with 16 GB of memory, macOS 27.2
 | AppHost started | 9.80 s | 9.60–10.10 s |
 | All 13 application resources ready | 12.22 s | 11.72–12.32 s |
 
-Both runtime timings start at the same process launch. See the [five runs and individual resource timings](../../benchmarks/results/2026-11-10-shared-postgres.json).
+Both runtime timings start at the same process launch. See the [original five runs with native configuration callbacks](../../benchmarks/results/2026-11-10-shared-postgres.json).
+
+After both apps switched to `http_endpoint` and `http_health_check`, a second five-run pass recorded medians of 9.78 s for AppHost startup and 12.65 s for resource readiness. All 13 resources reached readiness in every run. See the [DSL run data and individual resource timings](../../benchmarks/results/2026-11-10-shared-postgres-http-dsl.json).

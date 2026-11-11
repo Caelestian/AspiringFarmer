@@ -16,6 +16,8 @@ let builder = distributedApp {
     project "api" "../Api/Api.fsproj" {
         reference cache
         wait_for cache
+        http_endpoint "http"
+        http_health_check "http" "/health"
         external_http_endpoints
     }
 }
@@ -31,6 +33,10 @@ Project `reference` operations accept connection-string resources through a gene
 Project descriptions also support service-discovery references to other project descriptions.
 The current implementation does not yet generalize service-discovery references to every custom resource type.
 Project `wait_for` requires `IResourceWithWaitSupport` on the dependency.
+
+For projects, `http_endpoint` adds a named HTTP endpoint with Aspire-assigned ports.
+Use `http_health_check` with an endpoint name and a path served by that project.
+Aspire treats HTTP 200 as healthy and uses the result when another project waits for this resource.
 
 `ResourceBuilder<'T>` lets integrations define resource expressions without changing the core library.
 Its factory receives the native application builder and returns the native resource builder.

@@ -14,9 +14,6 @@ let schemaJob name projectName db =
         wait_for_child db
     }
 
-let configureWeb (resource: IResourceBuilder<ProjectResource>) =
-    resource.WithHttpEndpoint(name = "http").WithHttpHealthCheck("/health") |> ignore
-
 let describe args ephemeral =
     distributedApp {
         withArgs args
@@ -52,7 +49,8 @@ let describe args ephemeral =
             wait_for_completion identitySchema
             wait_for_completion catalogSchema
             wait_for_completion ordersSchema
-            configure configureWeb
+            http_endpoint "http"
+            http_health_check "http" "/health"
         }
 
         project "back-office" "../BackOffice/BackOffice.fsproj" {
@@ -62,7 +60,8 @@ let describe args ephemeral =
             wait_for_completion identitySchema
             wait_for_completion inventorySchema
             wait_for_completion reportingSchema
-            configure configureWeb
+            http_endpoint "http"
+            http_health_check "http" "/health"
         }
     }
 
