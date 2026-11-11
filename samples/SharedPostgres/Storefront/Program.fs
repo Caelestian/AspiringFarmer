@@ -11,6 +11,9 @@ open SharedPostgres
 let subject = "SharedPostgres mail test"
 let body = "Storefront sent this test message."
 
+let hasIdentity (configuration: IConfiguration) =
+    not (isNull configuration["Identity:Authority"])
+
 [<EntryPoint>]
 let main args =
     use http = new HttpClient()
@@ -30,11 +33,11 @@ let main args =
             1
     | _ ->
         let configureBuilder (builder: WebApplicationBuilder) =
-            if builder.Configuration.GetSection("Identity").Exists() then
+            if hasIdentity builder.Configuration then
                 Oidc.add builder
 
         let configure (app: WebApplication) =
-            if app.Configuration.GetSection("Identity").Exists() then
+            if hasIdentity app.Configuration then
                 Oidc.map app
 
             let sender = Mail.create http app.Configuration

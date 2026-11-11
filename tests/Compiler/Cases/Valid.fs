@@ -9,6 +9,9 @@ let cache: Description<RedisResource> = redis "cache" { data_volume }
 let inbox: Description<ContainerResource> = mailpit "mailpit" "v1.33.1"
 let outboundMail = smtp "mail" { port 465; tls SmtpTls.SslOnConnect }
 
+let identityProvider = project "identity-provider" "IdentityProvider.fsproj" { https_endpoint "https" }
+let signIn = oidc "web-auth" { authority_from_endpoint (endpoint "https" identityProvider) "/realms/example" }
+
 // No core-library changes are needed to describe another connection resource.
 let connection =
     ResourceBuilder<IResourceWithConnectionString>("external", fun builder -> builder.AddConnectionString("external")) {
@@ -23,6 +26,7 @@ let api: Description<ProjectResource> =
         https_endpoint "https"
         http_health_check "https" "/health"
         smtp_reference outboundMail
+        oidc_reference signIn
         configure (fun resource -> resource.WithEnvironment("MODE", "test") |> ignore)
     }
 

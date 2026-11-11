@@ -110,6 +110,63 @@ type ResourceBuilder<'T when 'T :> IResource>
 /// A named endpoint resolved against the application's native resource registry.
 type EndpointDescription = internal EndpointDescription of (Registry -> EndpointReference)
 
+module private Parameters =
+    let describe name secret =
+        let parameter =
+            ResourceBuilder<ParameterResource>(
+                name,
+                fun (builder: IDistributedApplicationBuilder) (registry: Registry) ->
+                    builder.AddParameter(registry.QualifyName name, secret = secret)
+            )
+
+        parameter.Run { Actions = [] }
+
+type OidcOptions =
+    internal
+        { AuthorityEndpoint: (EndpointDescription * string) option
+          ConfigurationSection: string option }
+
+type OidcDescription =
+    internal OidcDescription of (Registry -> IResourceBuilder<ProjectResource> -> unit)
+
+type OidcBuilder(name: string) =
+    member _.Yield(()) : OidcOptions =
+        { AuthorityEndpoint = None
+          ConfigurationSection = None }
+
+    [<CustomOperation("authority_from_endpoint")>]
+    member _.AuthorityFromEndpoint(options: OidcOptions, endpoint: EndpointDescription, path: string) =
+        { options with AuthorityEndpoint = Some(endpoint, path) }
+
+    [<CustomOperation("options_from_configuration")>]
+    member _.OptionsFromConfiguration(options: OidcOptions, section: string) =
+        { options with ConfigurationSection = Some section }
+
+    member _.Run(options: OidcOptions) =
+        let authority = Parameters.describe (name + "-authority") false
+        let clientId = Parameters.describe (name + "-client-id") false
+        let clientSecret = Parameters.describe (name + "-client-secret") true
+
+        OidcDescription(fun registry resource ->
+            match options.AuthorityEndpoint with
+            | Some(EndpointDescription resolve, path) ->
+                let expression = ReferenceExpressionBuilder()
+                expression.AppendFormatted(resolve registry)
+                expression.AppendLiteral path
+                resource.WithEnvironment("Identity__Authority", expression.Build()) |> ignore
+            | None ->
+                resource.WithEnvironment("Identity__Authority", registry.Resolve authority) |> ignore
+
+            resource.WithEnvironment("Identity__ClientId", registry.Resolve clientId) |> ignore
+            resource.WithEnvironment("Identity__ClientSecret", registry.Resolve clientSecret) |> ignore
+
+            for section in Option.toList options.ConfigurationSection do
+                let scopes = resource.ApplicationBuilder.Configuration.GetSection(section).GetSection("Scopes")
+
+                for index, scope in scopes.GetChildren() |> Seq.indexed do
+                    if not (String.IsNullOrWhiteSpace scope.Value) then
+                        resource.WithEnvironment($"Identity__Scopes__{index}", scope.Value) |> ignore)
+
 [<RequireQualifiedAccess>]
 type SmtpTls =
     | StartTls
@@ -147,14 +204,7 @@ type SmtpBuilder(name: string) =
 
     member _.Run(options: SmtpOptions) =
         let parameter suffix secret =
-            let name = name + "-" + suffix
-            let parameter =
-                ResourceBuilder<ParameterResource>(
-                    name,
-                    fun builder registry -> builder.AddParameter(registry.QualifyName name, secret = secret)
-                )
-
-            parameter.Run { Actions = [] }
+            Parameters.describe (name + "-" + suffix) secret
 
         let parameters =
             [ "Mail__From", parameter "from" false
@@ -255,6 +305,16 @@ type ProjectBuilder(name: string, path: string) =
     [<CustomOperation("endpoint_environment")>]
     member _.EndpointEnvironment(state: ResourceState<ProjectResource>, name: string, EndpointDescription resolve) =
         state.Add(fun registry resource -> resource.WithEnvironment(name, resolve registry) |> ignore)
+
+    [<CustomOperation("oidc_reference")>]
+    member _.OidcReference(state: ResourceState<ProjectResource>, OidcDescription apply) =
+        state.Add apply
+
+    [<CustomOperation("oidc_reference")>]
+    member this.OidcReference(state: ResourceState<ProjectResource>, oidc: OidcDescription option) =
+        match oidc with
+        | Some description -> this.OidcReference(state, description)
+        | None -> state
 
     [<CustomOperation("smtp_reference")>]
     member _.SmtpReference(state: ResourceState<ProjectResource>, SmtpDescription apply) =
@@ -398,6 +458,8 @@ module Builders =
 
     let smtp name = SmtpBuilder(name)
 
+    let oidc name = OidcBuilder(name)
+
     let container name image tag = ContainerBuilder(name, image, tag)
 
     let mailpit name tag =
@@ -413,15 +475,7 @@ module Builders =
     let endpoint<'T when 'T :> IResourceWithEndpoints> name (resource: Description<'T>) =
         EndpointDescription(fun registry -> (registry.Resolve resource).GetEndpoint name)
 
-    let secretParameter name =
-        let parameter =
-            ResourceBuilder<ParameterResource>(
-                name,
-                fun (builder: IDistributedApplicationBuilder) (registry: Registry) ->
-                    builder.AddParameter(registry.QualifyName name, secret = true)
-            )
-
-        parameter.Run { Actions = [] }
+    let secretParameter name = Parameters.describe name true
 
     let withArgs args = Args(Array.copy args)
     let appDefinition = AppDefinitionBuilder()

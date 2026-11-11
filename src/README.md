@@ -56,6 +56,21 @@ The AppHost reads optional `Port` and `Tls` settings from the named configuratio
 
 Use `AppHost.buildWith` when the application definition depends on Aspire's execution mode or configuration. The function receives the native builder before it registers the definition.
 
+Declare an OIDC client in your AppHost and reference it from a project.
+
+```fsharp
+let signIn = oidc "storefront-auth" { options_from_configuration "Identity" }
+
+project "storefront" "../Storefront/Storefront.fsproj" {
+    https_endpoint "https"
+    oidc_reference signIn
+}
+```
+
+Supply the issuer URL, client ID, and client secret through `Parameters:storefront-auth-authority`, `Parameters:storefront-auth-client-id`, and `Parameters:storefront-auth-client-secret`. The reference keeps all three values deferred and marks the client secret as secret. `options_from_configuration` copies optional scopes from the named section.
+
+For a provider hosted by Aspire, use `authority_from_endpoint (endpoint "https" provider) ""` in the `oidc` expression. Pass a path such as `"/realms/example"` for a Keycloak realm. The endpoint and path must form the HTTPS issuer URL that the browser and client can reach. The provider's client registration supplies the client ID and secret.
+
 `AspiringFarmer.Oidc` provides an ASP.NET Core client helper. Reference the project in your web application and register the services before building it.
 
 ```fsharp
