@@ -19,6 +19,12 @@ let schemaJob name projectName db =
 let describe ephemeral verifyMail (builder: IDistributedApplicationBuilder) =
     let transport = if verifyMail then "mailpit" else builder.Configuration["Mail:Transport"]
 
+    let externalSmtp =
+        if transport = "smtp" then
+            Some(smtp "mail" { options_from_configuration "Mail:Smtp" })
+        else
+            None
+
     let inbox =
         if transport = "mailpit" && builder.ExecutionContext.IsRunMode then
             Some(mailpit "mailpit" "v1.33.1")
@@ -35,23 +41,13 @@ let describe ephemeral verifyMail (builder: IDistributedApplicationBuilder) =
                 .WithEnvironment("Mail__Transport", "mailpit")
                 .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
             |> ignore
-        | null | "" | "disabled" | "mailpit" -> ()
-        | "smtp" | "exchange-smtp" | "graph" ->
+        | null | "" | "disabled" | "mailpit" | "smtp" -> ()
+        | "exchange-smtp" | "graph" ->
             resource.WithEnvironment("Mail__Transport", transport) |> ignore
             parameter "Mail__From" "mail-from" false
-
-            if transport = "smtp" then
-                parameter "Mail__Smtp__Host" "mail-smtp-host" false
-                parameter "Mail__Smtp__Username" "mail-smtp-username" false
-                parameter "Mail__Smtp__Password" "mail-smtp-password" true
-                for key in [ "Port"; "Tls" ] do
-                    match builder.Configuration[$"Mail:Smtp:{key}"] with
-                    | null | "" -> ()
-                    | value -> resource.WithEnvironment($"Mail__Smtp__{key}", value) |> ignore
-            else
-                parameter "Mail__TenantId" "mail-tenant-id" false
-                parameter "Mail__ClientId" "mail-client-id" false
-                parameter "Mail__ClientSecret" "mail-client-secret" true
+            parameter "Mail__TenantId" "mail-tenant-id" false
+            parameter "Mail__ClientId" "mail-client-id" false
+            parameter "Mail__ClientSecret" "mail-client-secret" true
         | _ -> invalidOp "Unsupported Mail:Transport."
 
     appDefinition {
@@ -105,6 +101,7 @@ let describe ephemeral verifyMail (builder: IDistributedApplicationBuilder) =
                 https_endpoint "https"
                 http_health_check "https" "/health"
                 configure configureMail
+                smtp_reference externalSmtp
             }
 
         project "back-office" "../BackOffice/BackOffice.fsproj" {

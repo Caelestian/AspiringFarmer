@@ -40,6 +40,20 @@ Aspire treats HTTP 200 as healthy and uses the result when another project waits
 
 `mailpit name tag` creates a container description with a TCP endpoint named `smtp` and an HTTP endpoint named `inbox`. The inbox readiness check uses `/readyz`.
 Use `endpoint_environment "Mail__Smtp__Endpoint" (endpoint "smtp" inbox)` in a project expression to pass the deferred SMTP URI. Add `wait_for inbox` to wait for Mailpit's readiness check.
+
+Use the SMTP builder to configure a project that reads the `Mail` settings.
+
+```fsharp
+let outboundMail = smtp "mail" { options_from_configuration "Mail:Smtp" }
+
+project "storefront" "../Storefront/Storefront.fsproj" {
+    smtp_reference outboundMail
+}
+```
+
+The reference passes the sender, host, username, and secret password as Aspire parameter references. Supply their values under `Parameters:mail-from`, `Parameters:mail-smtp-host`, `Parameters:mail-smtp-username`, and `Parameters:mail-smtp-password`.
+The AppHost reads optional `Port` and `Tls` settings from the named configuration section when it builds the model. Set `port 465` or `tls SmtpTls.SslOnConnect` in the expression to override the corresponding setting. An omitted option leaves the client default in effect. The SharedPostgres client defaults to port 587 with STARTTLS.
+
 Use `AppHost.buildWith` when the application definition depends on Aspire's execution mode or configuration. The function receives the native builder before it registers the definition.
 
 `ResourceBuilder<'T>` lets integrations define resource expressions without changing the core library.

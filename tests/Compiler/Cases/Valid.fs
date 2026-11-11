@@ -7,6 +7,7 @@ open AspiringFarmer.Redis
 
 let cache: Description<RedisResource> = redis "cache" { data_volume }
 let inbox: Description<ContainerResource> = mailpit "mailpit" "v1.33.1"
+let outboundMail = smtp "mail" { port 465; tls SmtpTls.SslOnConnect }
 
 // No core-library changes are needed to describe another connection resource.
 let connection =
@@ -21,6 +22,7 @@ let api: Description<ProjectResource> =
         wait_for cache
         https_endpoint "https"
         http_health_check "https" "/health"
+        smtp_reference outboundMail
         configure (fun resource -> resource.WithEnvironment("MODE", "test") |> ignore)
     }
 

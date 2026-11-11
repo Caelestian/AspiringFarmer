@@ -110,6 +110,86 @@ type ResourceBuilder<'T when 'T :> IResource>
 /// A named endpoint resolved against the application's native resource registry.
 type EndpointDescription = internal EndpointDescription of (Registry -> EndpointReference)
 
+[<RequireQualifiedAccess>]
+type SmtpTls =
+    | StartTls
+    | SslOnConnect
+
+type SmtpOptions =
+    internal
+        { Port: int option
+          Tls: SmtpTls option
+          ConfigurationSection: string option }
+
+type SmtpDescription =
+    internal SmtpDescription of (Registry -> IResourceBuilder<ProjectResource> -> unit)
+
+type SmtpBuilder(name: string) =
+    member _.Yield(()) : SmtpOptions =
+        { Port = None
+          Tls = None
+          ConfigurationSection = None }
+
+    [<CustomOperation("port")>]
+    member _.Port(options: SmtpOptions, port: int) =
+        if port < 1 || port > 65535 then
+            invalidArg (nameof port) "SMTP port must be between 1 and 65535."
+
+        { options with Port = Some port }
+
+    [<CustomOperation("tls")>]
+    member _.Tls(options: SmtpOptions, tls: SmtpTls) =
+        { options with Tls = Some tls }
+
+    [<CustomOperation("options_from_configuration")>]
+    member _.OptionsFromConfiguration(options: SmtpOptions, section: string) =
+        { options with ConfigurationSection = Some section }
+
+    member _.Run(options: SmtpOptions) =
+        let parameter suffix secret =
+            let name = name + "-" + suffix
+            let parameter =
+                ResourceBuilder<ParameterResource>(
+                    name,
+                    fun builder registry -> builder.AddParameter(registry.QualifyName name, secret = secret)
+                )
+
+            parameter.Run { Actions = [] }
+
+        let parameters =
+            [ "Mail__From", parameter "from" false
+              "Mail__Smtp__Host", parameter "smtp-host" false
+              "Mail__Smtp__Username", parameter "smtp-username" false
+              "Mail__Smtp__Password", parameter "smtp-password" true ]
+
+        SmtpDescription(fun registry resource ->
+            resource.WithEnvironment("Mail__Transport", "smtp") |> ignore
+
+            for key, parameter in parameters do
+                resource.WithEnvironment(key, registry.Resolve parameter) |> ignore
+
+            let setOption key explicitValue =
+                let value =
+                    match explicitValue, options.ConfigurationSection with
+                    | Some value, _ -> value
+                    | None, Some section -> resource.ApplicationBuilder.Configuration[$"{section}:{key}"]
+                    | None, None -> null
+
+                if not (String.IsNullOrWhiteSpace value) then
+                    resource.WithEnvironment($"Mail__Smtp__{key}", value) |> ignore
+
+            let port =
+                options.Port |> Option.map (fun port -> port.ToString(Globalization.CultureInfo.InvariantCulture))
+
+            let tls =
+                options.Tls
+                |> Option.map (function
+                    | SmtpTls.StartTls -> "starttls"
+                    | SmtpTls.SslOnConnect -> "ssl-on-connect")
+
+            setOption "Port" port
+            setOption "Tls" tls)
+
 type ContainerBuilder(name: string, image: string, tag: string) =
     inherit
         ResourceBuilder<ContainerResource>(
@@ -175,6 +255,16 @@ type ProjectBuilder(name: string, path: string) =
     [<CustomOperation("endpoint_environment")>]
     member _.EndpointEnvironment(state: ResourceState<ProjectResource>, name: string, EndpointDescription resolve) =
         state.Add(fun registry resource -> resource.WithEnvironment(name, resolve registry) |> ignore)
+
+    [<CustomOperation("smtp_reference")>]
+    member _.SmtpReference(state: ResourceState<ProjectResource>, SmtpDescription apply) =
+        state.Add apply
+
+    [<CustomOperation("smtp_reference")>]
+    member this.SmtpReference(state: ResourceState<ProjectResource>, smtp: SmtpDescription option) =
+        match smtp with
+        | Some description -> this.SmtpReference(state, description)
+        | None -> state
 
     [<CustomOperation("http_endpoint")>]
     member _.HttpEndpoint(state: ResourceState<ProjectResource>, name: string) =
@@ -305,6 +395,8 @@ type DistributedAppBuilder() =
 [<AutoOpen>]
 module Builders =
     let project name path = ProjectBuilder(name, path)
+
+    let smtp name = SmtpBuilder(name)
 
     let container name image tag = ContainerBuilder(name, image, tag)
 

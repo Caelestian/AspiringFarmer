@@ -24,6 +24,8 @@ with tempfile.TemporaryDirectory(prefix="aspiringfarmer-mail-") as directory:
         env = dict(os.environ, Mail__Transport=transport, DOTNET_ENVIRONMENT="Development")
         env["Parameters__mail-smtp-password"] = "smtp-secret-canary"
         env["Parameters__mail-client-secret"] = "entra-secret-canary"
+        env["Mail__Smtp__Port"] = "465"
+        env["Mail__Smtp__Tls"] = "ssl-on-connect"
         run("dotnet", str(APPHOST), "--publisher", "manifest", "--output-path", str(manifest), env=env)
         text = manifest.read_text()
         resources = json.loads(text)["resources"]
@@ -38,4 +40,9 @@ with tempfile.TemporaryDirectory(prefix="aspiringfarmer-mail-") as directory:
             secret = "mail-smtp-password" if transport == "smtp" else "mail-client-secret"
             assert resources[secret]["inputs"]["value"]["secret"] is True
             assert "{" + secret + ".value}" in environment.values()
+            if transport == "smtp":
+                assert environment["Mail__Smtp__Host"] == "{mail-smtp-host.value}"
+                assert environment["Mail__Smtp__Username"] == "{mail-smtp-username.value}"
+                assert environment["Mail__Smtp__Port"] == "465"
+                assert environment["Mail__Smtp__Tls"] == "ssl-on-connect"
         print(f"PASS: {transport} manifest excludes Mailpit and keeps secrets deferred", flush=True)
