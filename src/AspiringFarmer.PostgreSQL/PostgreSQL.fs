@@ -66,6 +66,14 @@ type PostgreSQLDatabaseBuilder(name: string, server: Description<PostgresServerR
           ProjectPath = path
           ConnectionAlias = connectionAlias }
 
+    [<CustomOperation("schema_project_ref")>]
+    member this.SchemaProjectRef(state: ResourceState<PostgresDatabaseResource>, ProjectPath path) =
+        this.SchemaProject(state, path)
+
+    [<CustomOperation("schema_project_ref")>]
+    member this.SchemaProjectRef(state: ResourceState<PostgresDatabaseResource>, ProjectPath path, projectName: string, connectionAlias: string) =
+        this.SchemaProject(state, path, projectName, connectionAlias)
+
     [<CustomOperation("configure")>]
     member _.Configure(state: PostgreSQLSchemaState, configure: IResourceBuilder<PostgresDatabaseResource> -> unit) =
         { state with Database = base.Configure(state.Database, configure) }

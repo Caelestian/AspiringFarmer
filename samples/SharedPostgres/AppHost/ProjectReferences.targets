@@ -1,0 +1,23 @@
+<Project>
+  <Target Name="GenerateAspiringFarmerProjects" BeforeTargets="FSharpSourceCodeCompileOrder">
+    <PropertyGroup>
+      <_AspiringFarmerProjectSource>$(IntermediateOutputPath)AspiringFarmer.Projects.g.fs</_AspiringFarmerProjectSource>
+    </PropertyGroup>
+    <ItemGroup>
+      <_AspiringFarmerProject Include="@(ProjectReference)" Condition="'%(ProjectReference.AspiringFarmerName)' != ''">
+        <EscapedPath>$([System.String]::Copy('%(ProjectReference.FullPath)').Replace('&quot;', '&quot;&quot;'))</EscapedPath>
+      </_AspiringFarmerProject>
+    </ItemGroup>
+    <Error Condition="!Exists('%(_AspiringFarmerProject.FullPath)')"
+           Text="AspiringFarmer project reference '%(_AspiringFarmerProject.AspiringFarmerName)' points to a missing file: %(_AspiringFarmerProject.FullPath)" />
+    <WriteLinesToFile
+      File="$(_AspiringFarmerProjectSource)"
+      Lines="module Projects;@(_AspiringFarmerProject->'let %(AspiringFarmerName) = AspiringFarmer.ProjectPath @&quot;%(EscapedPath)&quot;')"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(_AspiringFarmerProjectSource)" CompileOrder="CompileBefore" />
+      <FileWrites Include="$(_AspiringFarmerProjectSource)" />
+    </ItemGroup>
+  </Target>
+</Project>

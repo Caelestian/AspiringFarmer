@@ -11,10 +11,13 @@
     <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <ProjectReference Include="../../../src/AspiringFarmer.PostgreSQL/AspiringFarmer.PostgreSQL.fsproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="../Storefront/Storefront.fsproj" ReferenceOutputAssembly="false" IsAspireProjectResource="false" AspiringFarmerName="Storefront" />
+    <ProjectReference Include="../Identity.Schema/Identity.Schema.fsproj" ReferenceOutputAssembly="false" IsAspireProjectResource="false" AspiringFarmerName="IdentitySchema" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Compile Include="Verification.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+  <Import Project="ProjectReferences.targets" />
 </Project>

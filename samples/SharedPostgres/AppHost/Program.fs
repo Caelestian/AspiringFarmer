@@ -30,13 +30,13 @@ let describe () =
     appDefinition {
         let server = postgres "postgres" { data_volume_from_configuration "Postgres:PersistData" }
 
-        let identity = database "identity" server { schema_project "../Identity.Schema/Identity.Schema.fsproj" }
+        let identity = database "identity" server { schema_project_ref Projects.IdentitySchema }
         let catalog = database "catalog" server { schema_project "../Catalog.Schema/Catalog.Schema.fsproj" }
         let orders = database "orders" server { schema_project "../Orders.Schema/Orders.Schema.fsproj" }
         let inventory = database "inventory" server { schema_project "../Inventory.Schema/Inventory.Schema.fsproj" }
         let reporting = database "reporting" server { schema_project "../Reporting.Schema/Reporting.Schema.fsproj" }
 
-        project "storefront" "../Storefront/Storefront.fsproj" {
+        project_ref "storefront" Projects.Storefront {
             use_database identity
             use_database catalog
             use_database orders

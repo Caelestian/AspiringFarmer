@@ -110,6 +110,9 @@ type ResourceBuilder<'T when 'T :> IResource>
 /// A named endpoint resolved against the application's native resource registry.
 type EndpointDescription = internal EndpointDescription of (Registry -> EndpointReference)
 
+/// A project path supplied by generated AppHost project metadata.
+type ProjectPath = ProjectPath of string
+
 type DatabaseWithSchema<'T when 'T :> IResourceWithConnectionString> =
     internal DatabaseWithSchema of Description<'T> * Description<ProjectResource>
 
@@ -556,6 +559,8 @@ type DistributedAppBuilder() =
 [<AutoOpen>]
 module Builders =
     let project name path = ProjectBuilder(name, path)
+
+    let project_ref name (ProjectPath path) = ProjectBuilder(name, path)
 
     let database_with_schema database schema = DatabaseWithSchema(database, schema)
 
