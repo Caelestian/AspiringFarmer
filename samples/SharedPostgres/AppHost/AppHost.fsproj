@@ -13,7 +13,6 @@
     <ProjectReference Include="../../../src/AspiringFarmer.PostgreSQL/AspiringFarmer.PostgreSQL.fsproj" IsAspireProjectResource="false" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MailConfiguration.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

@@ -16,8 +16,12 @@ let schemaJob name projectName db =
         wait_for_child db
     }
 
-let describe ephemeral verifyMail (builder: IDistributedApplicationBuilder) =
-    let mail, configureMail = MailConfiguration.describe verifyMail builder
+let describe ephemeral (builder: IDistributedApplicationBuilder) =
+    let outboundMail =
+        mail "mail" {
+            mailpit_inbox (mailpit "mailpit" "v1.33.1")
+            mailpit_environment "ASPNETCORE_ENVIRONMENT" "Development"
+        }
 
     let signIn =
         if String.Equals(builder.Configuration["Identity:Enabled"], "true", StringComparison.OrdinalIgnoreCase) then
@@ -60,8 +64,7 @@ let describe ephemeral verifyMail (builder: IDistributedApplicationBuilder) =
             https_endpoint "https"
             http_health_check "https" "/health"
             oidc_reference signIn
-            configure configureMail
-            smtp_reference mail
+            mail_reference outboundMail
         }
 
         project "back-office" "../BackOffice/BackOffice.fsproj" {
@@ -148,7 +151,8 @@ let main args =
     let benchmark = Array.contains "--benchmark" args
     let verifyMail = Array.contains "--verify-mail" args
     let hostArgs = args |> Array.filter (fun arg -> arg <> "--benchmark" && arg <> "--verify-mail")
-    let builder = AppHost.buildWith hostArgs (describe (benchmark || verifyMail) verifyMail)
+    let hostArgs = if verifyMail then Array.append hostArgs [| "--Mail:Transport=mailpit" |] else hostArgs
+    let builder = AppHost.buildWith hostArgs (describe (benchmark || verifyMail))
 
     if benchmark || verifyMail then
         let afterReady = if verifyMail then verifyDelivery builder else fun _ -> Task.CompletedTask

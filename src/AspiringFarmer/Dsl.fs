@@ -181,6 +181,18 @@ type SmtpOptions =
 type SmtpDescription =
     internal SmtpDescription of (Registry -> IResourceBuilder<ProjectResource> -> unit)
 
+module private Smtp =
+    let fromMailpit (inbox: Description<ContainerResource>) =
+        SmtpDescription(fun registry resource ->
+            if resource.ApplicationBuilder.ExecutionContext.IsRunMode then
+                let mailpit = registry.Resolve inbox
+
+                resource
+                    .WithEnvironment("Mail__Transport", "mailpit")
+                    .WithEnvironment("Mail__Smtp__Endpoint", mailpit.GetEndpoint "smtp")
+                    .WaitFor(mailpit)
+                |> ignore)
+
 type SmtpBuilder(name: string) =
     member _.Yield(()) : SmtpOptions =
         { Port = None
@@ -239,6 +251,70 @@ type SmtpBuilder(name: string) =
 
             setOption "Port" port
             setOption "Tls" tls)
+
+type MailOptions =
+    internal
+        { ConfigurationSection: string
+          Inbox: Description<ContainerResource> option
+          MailpitEnvironment: (string * string) list }
+
+type MailDescription =
+    internal MailDescription of (Registry -> IResourceBuilder<ProjectResource> -> unit)
+
+type MailBuilder(name: string) =
+    member _.Yield(()) : MailOptions =
+        { ConfigurationSection = "Mail"
+          Inbox = None
+          MailpitEnvironment = [] }
+
+    [<CustomOperation("options_from_configuration")>]
+    member _.OptionsFromConfiguration(options: MailOptions, section: string) =
+        { options with ConfigurationSection = section }
+
+    [<CustomOperation("mailpit_inbox")>]
+    member _.MailpitInbox(options: MailOptions, inbox: Description<ContainerResource>) =
+        { options with Inbox = Some inbox }
+
+    [<CustomOperation("mailpit_environment")>]
+    member _.MailpitEnvironment(options: MailOptions, key: string, value: string) =
+        { options with MailpitEnvironment = options.MailpitEnvironment @ [ key, value ] }
+
+    member _.Run(options: MailOptions) =
+        let smtp = SmtpBuilder(name)
+        let (SmtpDescription applySmtp) =
+            smtp { options_from_configuration (options.ConfigurationSection + ":Smtp") }
+
+        let parameter suffix secret =
+            Parameters.describe (name + "-" + suffix) secret
+
+        let entraParameters =
+            [ "Mail__From", parameter "from" false
+              "Mail__TenantId", parameter "tenant-id" false
+              "Mail__ClientId", parameter "client-id" false
+              "Mail__ClientSecret", parameter "client-secret" true ]
+
+        MailDescription(fun registry resource ->
+            let builder = resource.ApplicationBuilder
+
+            match builder.Configuration[$"{options.ConfigurationSection}:Transport"] with
+            | "smtp" ->
+                applySmtp registry resource
+            | "mailpit" when builder.ExecutionContext.IsRunMode ->
+                match options.Inbox with
+                | Some inbox ->
+                    let (SmtpDescription applyMailpit) = Smtp.fromMailpit inbox
+                    applyMailpit registry resource
+
+                    for key, value in options.MailpitEnvironment do
+                        resource.WithEnvironment(key, value) |> ignore
+                | None -> invalidOp $"Mail '{name}' requires a mailpit_inbox when using the mailpit transport."
+            | "exchange-smtp" | "graph" as transport ->
+                resource.WithEnvironment("Mail__Transport", transport) |> ignore
+
+                for key, parameter in entraParameters do
+                    resource.WithEnvironment(key, registry.Resolve parameter) |> ignore
+            | null | "" | "disabled" | "mailpit" -> ()
+            | transport -> invalidOp $"Unsupported mail transport '{transport}' for '{name}'.")
 
 type ContainerBuilder(name: string, image: string, tag: string) =
     inherit
@@ -325,6 +401,10 @@ type ProjectBuilder(name: string, path: string) =
         match smtp with
         | Some description -> this.SmtpReference(state, description)
         | None -> state
+
+    [<CustomOperation("mail_reference")>]
+    member _.MailReference(state: ResourceState<ProjectResource>, MailDescription apply) =
+        state.Add apply
 
     [<CustomOperation("http_endpoint")>]
     member _.HttpEndpoint(state: ResourceState<ProjectResource>, name: string) =
@@ -458,6 +538,8 @@ module Builders =
 
     let smtp name = SmtpBuilder(name)
 
+    let mail name = MailBuilder(name)
+
     let oidc name = OidcBuilder(name)
 
     let container name image tag = ContainerBuilder(name, image, tag)
@@ -473,16 +555,7 @@ module Builders =
         }
 
     /// Connects an SMTP client to a local Mailpit resource during a run.
-    let smtpFromMailpit (inbox: Description<ContainerResource>) =
-        SmtpDescription(fun registry resource ->
-            if resource.ApplicationBuilder.ExecutionContext.IsRunMode then
-                let mailpit = registry.Resolve inbox
-
-                resource
-                    .WithEnvironment("Mail__Transport", "mailpit")
-                    .WithEnvironment("Mail__Smtp__Endpoint", mailpit.GetEndpoint "smtp")
-                    .WaitFor(mailpit)
-                |> ignore)
+    let smtpFromMailpit inbox = Smtp.fromMailpit inbox
 
     let endpoint<'T when 'T :> IResourceWithEndpoints> name (resource: Description<'T>) =
         EndpointDescription(fun registry -> (registry.Resolve resource).GetEndpoint name)

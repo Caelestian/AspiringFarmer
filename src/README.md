@@ -41,6 +41,22 @@ Aspire treats HTTP 200 as healthy and uses the result when another project waits
 `mailpit name tag` creates a container description with a TCP endpoint named `smtp` and an HTTP endpoint named `inbox`. The inbox readiness check uses `/readyz`.
 Use `smtp_reference (smtpFromMailpit inbox)` to supply the project's mail transport and deferred SMTP URI and wait for Mailpit's readiness check. This reference registers Mailpit in run mode.
 
+Use `mail_reference` when the AppHost selects a transport from configuration.
+
+```fsharp
+let outboundMail = mail "mail" {
+    mailpit_inbox (mailpit "mailpit" "v1.33.1")
+}
+
+project "storefront" "../Storefront/Storefront.fsproj" {
+    mail_reference outboundMail
+}
+```
+
+Set `Mail:Transport` to `mailpit`, `smtp`, `exchange-smtp`, `graph`, or `disabled`. The builder reads the `Mail` section by default. Use `options_from_configuration` to read transport and SMTP settings from another section. The reference adds Mailpit only for local runs and keeps production credentials as deferred Aspire parameters. The builder name prefixes the parameter names. See the [SharedPostgres mail configuration](../samples/SharedPostgres/README.md#configure-a-production-transport) for the parameters each transport uses.
+
+Use `mailpit_environment` to set a project environment variable only when the local Mailpit transport is active.
+
 Use the SMTP builder to configure a project that reads the `Mail` settings.
 
 ```fsharp
