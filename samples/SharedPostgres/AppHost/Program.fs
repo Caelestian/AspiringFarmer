@@ -49,8 +49,8 @@ let describe args ephemeral =
             wait_for_completion identitySchema
             wait_for_completion catalogSchema
             wait_for_completion ordersSchema
-            http_endpoint "http"
-            http_health_check "http" "/health"
+            https_endpoint "https"
+            http_health_check "https" "/health"
         }
 
         project "back-office" "../BackOffice/BackOffice.fsproj" {

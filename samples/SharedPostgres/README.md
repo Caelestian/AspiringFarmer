@@ -8,14 +8,16 @@ The [AppHost](AppHost/Program.fs) declares one PostgreSQL server and five databa
 | Back Office | Identity, Inventory, Reporting |
 
 Both apps share the Identity database and wait on the same Identity schema job. Each app's `/health` endpoint queries the seeded row in all three of its databases.
+Storefront serves HTTPS. Back Office serves HTTP. Aspire probes each app through its declared endpoint.
 
 The schema jobs read their connection string from `ConnectionStrings__appdb`. The normal AppHost uses a data volume and saves the generated PostgreSQL password in .NET user secrets. The schema and seed SQL can run again against an existing volume.
 
 ## Run the sample
 
-Use the .NET 10 SDK, the Aspire CLI, and a running Docker engine. Run these commands from the repository root.
+Use the .NET 10 SDK, the Aspire CLI, and a running Docker engine. Trust the ASP.NET Core development certificate before starting the sample. Run these commands from the repository root.
 
 ```sh
+dotnet dev-certs https --trust
 dotnet build samples/SharedPostgres/SharedPostgres.slnx
 dotnet run --project samples/SharedPostgres/AppHost --no-build
 ```

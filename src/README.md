@@ -34,8 +34,8 @@ Project descriptions also support service-discovery references to other project 
 The current implementation does not yet generalize service-discovery references to every custom resource type.
 Project `wait_for` requires `IResourceWithWaitSupport` on the dependency.
 
-For projects, `http_endpoint` adds a named HTTP endpoint with Aspire-assigned ports.
-Use `http_health_check` with an endpoint name and a path served by that project.
+For projects, `http_endpoint` and `https_endpoint` add named endpoints with Aspire-assigned ports.
+Use `http_health_check` with the name of an HTTP or HTTPS endpoint and a path served by that project.
 Aspire treats HTTP 200 as healthy and uses the result when another project waits for this resource.
 
 `ResourceBuilder<'T>` lets integrations define resource expressions without changing the core library.

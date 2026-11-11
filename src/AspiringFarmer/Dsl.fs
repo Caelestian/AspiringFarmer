@@ -180,6 +180,10 @@ type ProjectBuilder(name: string, path: string) =
     member _.HttpEndpoint(state: ResourceState<ProjectResource>, name: string) =
         state.Add(fun _ resource -> resource.WithHttpEndpoint(name = name) |> ignore)
 
+    [<CustomOperation("https_endpoint")>]
+    member _.HttpsEndpoint(state: ResourceState<ProjectResource>, name: string) =
+        state.Add(fun _ resource -> resource.WithHttpsEndpoint(name = name) |> ignore)
+
     [<CustomOperation("http_health_check")>]
     member _.HttpHealthCheck(state: ResourceState<ProjectResource>, endpointName: string, path: string) =
         state.Add(fun _ resource -> resource.WithHttpHealthCheck(path, endpointName = endpointName) |> ignore)

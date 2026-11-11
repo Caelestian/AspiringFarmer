@@ -18,8 +18,8 @@ let api: Description<ProjectResource> =
         reference cache
         reference connection
         wait_for cache
-        http_endpoint "http"
-        http_health_check "http" "/health"
+        https_endpoint "https"
+        http_health_check "https" "/health"
         configure (fun resource -> resource.WithEnvironment("MODE", "test") |> ignore)
     }
 
