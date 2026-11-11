@@ -110,6 +110,9 @@ type ResourceBuilder<'T when 'T :> IResource>
 /// A named endpoint resolved against the application's native resource registry.
 type EndpointDescription = internal EndpointDescription of (Registry -> EndpointReference)
 
+type DatabaseWithSchema<'T when 'T :> IResourceWithConnectionString> =
+    internal DatabaseWithSchema of Description<'T> * Description<ProjectResource>
+
 module private Parameters =
     let describe name secret =
         let parameter =
@@ -378,6 +381,11 @@ type ProjectBuilder(name: string, path: string) =
     member _.WaitForCompletion(state: ResourceState<ProjectResource>, dependency: Description<ProjectResource>) =
         state.Add(fun registry resource -> resource.WaitForCompletion(registry.Resolve dependency) |> ignore)
 
+    [<CustomOperation("use_database")>]
+    member this.UseDatabase(state: ResourceState<ProjectResource>, DatabaseWithSchema(database, schema)) =
+        let state = this.Reference(state, database)
+        this.WaitForCompletion(state, schema)
+
     [<CustomOperation("endpoint_environment")>]
     member _.EndpointEnvironment(state: ResourceState<ProjectResource>, name: string, EndpointDescription resolve) =
         state.Add(fun registry resource -> resource.WithEnvironment(name, resolve registry) |> ignore)
@@ -535,6 +543,8 @@ type DistributedAppBuilder() =
 [<AutoOpen>]
 module Builders =
     let project name path = ProjectBuilder(name, path)
+
+    let database_with_schema database schema = DatabaseWithSchema(database, schema)
 
     let smtp name = SmtpBuilder(name)
 

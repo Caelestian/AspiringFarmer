@@ -34,6 +34,8 @@ Project descriptions also support service-discovery references to other project 
 The current implementation does not yet generalize service-discovery references to every custom resource type.
 Project `wait_for` requires `IResourceWithWaitSupport` on the dependency.
 
+Use `database_with_schema database schemaJob` to pair a connection-string resource with a schema project. In a project expression, `use_database` adds the database reference and waits for the schema project to exit with code 0. Configure the schema project's own database reference and readiness wait when declaring the job. Projects that use the same pair share the same schema job. See the [SharedPostgres AppHost](../samples/SharedPostgres/AppHost/Program.fs) for an example.
+
 For projects, `http_endpoint` and `https_endpoint` add named endpoints with Aspire-assigned ports.
 Use `http_health_check` with the name of an HTTP or HTTPS endpoint and a path served by that project.
 Aspire treats HTTP 200 as healthy and uses the result when another project waits for this resource.

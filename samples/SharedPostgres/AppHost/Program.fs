@@ -10,11 +10,16 @@ open AspiringFarmer.PostgreSQL
 
 let databaseNames = [ "identity"; "catalog"; "orders"; "inventory"; "reporting" ]
 
-let schemaJob name projectName db =
-    project name $"../{projectName}/{projectName}.fsproj" {
-        reference_as "appdb" db
-        wait_for_child db
-    }
+let databaseWithSchema name projectName server =
+    let db = database name server { configure ignore }
+
+    let schema =
+        project (name + "-schema") $"../{projectName}/{projectName}.fsproj" {
+            reference_as "appdb" db
+            wait_for_child db
+        }
+
+    database_with_schema db schema
 
 let describe ephemeral (builder: IDistributedApplicationBuilder) =
     let outboundMail =
@@ -36,31 +41,16 @@ let describe ephemeral (builder: IDistributedApplicationBuilder) =
             else
                 postgres "postgres" { data_volume }
 
-        let identity = database "identity" server { configure ignore }
-        let catalog = database "catalog" server { configure ignore }
-        let orders = database "orders" server { configure ignore }
-        let inventory = database "inventory" server { configure ignore }
-        let reporting = database "reporting" server { configure ignore }
-
-        let identitySchema = schemaJob "identity-schema" "Identity.Schema" identity
-        let catalogSchema = schemaJob "catalog-schema" "Catalog.Schema" catalog
-        let ordersSchema = schemaJob "orders-schema" "Orders.Schema" orders
-        let inventorySchema = schemaJob "inventory-schema" "Inventory.Schema" inventory
-        let reportingSchema = schemaJob "reporting-schema" "Reporting.Schema" reporting
-
-        identitySchema
-        catalogSchema
-        ordersSchema
-        inventorySchema
-        reportingSchema
+        let identity = databaseWithSchema "identity" "Identity.Schema" server
+        let catalog = databaseWithSchema "catalog" "Catalog.Schema" server
+        let orders = databaseWithSchema "orders" "Orders.Schema" server
+        let inventory = databaseWithSchema "inventory" "Inventory.Schema" server
+        let reporting = databaseWithSchema "reporting" "Reporting.Schema" server
 
         project "storefront" "../Storefront/Storefront.fsproj" {
-            reference identity
-            reference catalog
-            reference orders
-            wait_for_completion identitySchema
-            wait_for_completion catalogSchema
-            wait_for_completion ordersSchema
+            use_database identity
+            use_database catalog
+            use_database orders
             https_endpoint "https"
             http_health_check "https" "/health"
             oidc_reference signIn
@@ -68,12 +58,9 @@ let describe ephemeral (builder: IDistributedApplicationBuilder) =
         }
 
         project "back-office" "../BackOffice/BackOffice.fsproj" {
-            reference identity
-            reference inventory
-            reference reporting
-            wait_for_completion identitySchema
-            wait_for_completion inventorySchema
-            wait_for_completion reportingSchema
+            use_database identity
+            use_database inventory
+            use_database reporting
             http_endpoint "http"
             http_health_check "http" "/health"
         }
