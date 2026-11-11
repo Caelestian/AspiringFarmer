@@ -1,4 +1,6 @@
 open System
+open System.Net.Http
+open System.Text.Json
 open System.Threading
 open System.Threading.Tasks
 open Aspire.Hosting
@@ -14,10 +16,45 @@ let schemaJob name projectName db =
         wait_for_child db
     }
 
-let describe args ephemeral =
-    distributedApp {
-        withArgs args
+let describe ephemeral verifyMail (builder: IDistributedApplicationBuilder) =
+    let transport = if verifyMail then "mailpit" else builder.Configuration["Mail:Transport"]
 
+    let inbox =
+        if transport = "mailpit" && builder.ExecutionContext.IsRunMode then
+            Some(mailpit "mailpit" "v1.33.1")
+        else
+            None
+
+    let configureMail (resource: IResourceBuilder<ProjectResource>) =
+        let parameter key name secret =
+            resource.WithEnvironment(key, builder.AddParameter(name, secret = secret)) |> ignore
+
+        match transport with
+        | "mailpit" when inbox.IsSome ->
+            resource
+                .WithEnvironment("Mail__Transport", "mailpit")
+                .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+            |> ignore
+        | null | "" | "disabled" | "mailpit" -> ()
+        | "smtp" | "exchange-smtp" | "graph" ->
+            resource.WithEnvironment("Mail__Transport", transport) |> ignore
+            parameter "Mail__From" "mail-from" false
+
+            if transport = "smtp" then
+                parameter "Mail__Smtp__Host" "mail-smtp-host" false
+                parameter "Mail__Smtp__Username" "mail-smtp-username" false
+                parameter "Mail__Smtp__Password" "mail-smtp-password" true
+                for key in [ "Port"; "Tls" ] do
+                    match builder.Configuration[$"Mail:Smtp:{key}"] with
+                    | null | "" -> ()
+                    | value -> resource.WithEnvironment($"Mail__Smtp__{key}", value) |> ignore
+            else
+                parameter "Mail__TenantId" "mail-tenant-id" false
+                parameter "Mail__ClientId" "mail-client-id" false
+                parameter "Mail__ClientSecret" "mail-client-secret" true
+        | _ -> invalidOp "Unsupported Mail:Transport."
+
+    appDefinition {
         let server =
             if ephemeral then
                 postgres "postgres" { configure ignore }
@@ -42,16 +79,33 @@ let describe args ephemeral =
         inventorySchema
         reportingSchema
 
-        project "storefront" "../Storefront/Storefront.fsproj" {
-            reference identity
-            reference catalog
-            reference orders
-            wait_for_completion identitySchema
-            wait_for_completion catalogSchema
-            wait_for_completion ordersSchema
-            https_endpoint "https"
-            http_health_check "https" "/health"
-        }
+        match inbox with
+        | Some inbox ->
+            project "storefront" "../Storefront/Storefront.fsproj" {
+                reference identity
+                reference catalog
+                reference orders
+                wait_for_completion identitySchema
+                wait_for_completion catalogSchema
+                wait_for_completion ordersSchema
+                https_endpoint "https"
+                http_health_check "https" "/health"
+                configure configureMail
+                endpoint_environment "Mail__Smtp__Endpoint" (endpoint "smtp" inbox)
+                wait_for inbox
+            }
+        | None ->
+            project "storefront" "../Storefront/Storefront.fsproj" {
+                reference identity
+                reference catalog
+                reference orders
+                wait_for_completion identitySchema
+                wait_for_completion catalogSchema
+                wait_for_completion ordersSchema
+                https_endpoint "https"
+                http_health_check "https" "/health"
+                configure configureMail
+            }
 
         project "back-office" "../BackOffice/BackOffice.fsproj" {
             reference identity
@@ -65,7 +119,7 @@ let describe args ephemeral =
         }
     }
 
-let measure (app: DistributedApplication) =
+let measure (app: DistributedApplication) (afterReady: CancellationToken -> Task) =
     task {
         use timeout = new CancellationTokenSource(TimeSpan.FromMinutes 2.0)
         let notifications = app.ResourceNotifications
@@ -98,6 +152,7 @@ let measure (app: DistributedApplication) =
         try
             let! _ = readiness
             Console.WriteLine("sample:all-ready")
+            do! afterReady timeout.Token
         with error ->
             do! app.StopAsync()
             return raise error
@@ -105,14 +160,43 @@ let measure (app: DistributedApplication) =
         do! app.StopAsync()
     }
 
+let verifyDelivery (builder: IDistributedApplicationBuilder) =
+    let endpoint resourceName (endpointName: string) =
+        let resource = builder.Resources |> Seq.find (fun resource -> resource.Name = resourceName)
+        EndpointReference(resource :?> IResourceWithEndpoints, endpointName)
+
+    let storefront = endpoint "storefront" "https"
+    let inbox = endpoint "mailpit" "inbox"
+
+    fun cancellationToken ->
+        task {
+            use client = new HttpClient()
+            use! response = client.PostAsync(storefront.Url + "/mail/test", null, cancellationToken)
+            response.EnsureSuccessStatusCode() |> ignore
+            use! content = client.GetStreamAsync(inbox.Url + "/api/v1/messages", cancellationToken)
+            use! messages = JsonDocument.ParseAsync(content, cancellationToken = cancellationToken)
+            let delivered =
+                messages.RootElement.GetProperty("messages").EnumerateArray()
+                |> Seq.exists (fun message -> message.GetProperty("Subject").GetString() = "SharedPostgres mail test")
+
+            if not delivered then
+                failwith "Mailpit did not capture Storefront's message."
+
+            Console.WriteLine("PASS: Storefront sent a message captured by Mailpit.")
+        }
+        :> Task
+
 [<EntryPoint>]
 let main args =
     let benchmark = Array.contains "--benchmark" args
-    let builder = describe (Array.filter ((<>) "--benchmark") args) benchmark
+    let verifyMail = Array.contains "--verify-mail" args
+    let hostArgs = args |> Array.filter (fun arg -> arg <> "--benchmark" && arg <> "--verify-mail")
+    let builder = AppHost.buildWith hostArgs (describe (benchmark || verifyMail) verifyMail)
 
-    if benchmark then
+    if benchmark || verifyMail then
+        let afterReady = if verifyMail then verifyDelivery builder else fun _ -> Task.CompletedTask
         use app = builder.Build()
-        (measure app).GetAwaiter().GetResult()
+        (measure app afterReady).GetAwaiter().GetResult()
     else
         AppHost.run builder
 

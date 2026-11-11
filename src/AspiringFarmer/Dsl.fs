@@ -261,11 +261,14 @@ module AppHost =
 
         AppScope(prefix).Create define
 
-    let build args (AppDefinition registrations) =
+    let buildWith args (describe: IDistributedApplicationBuilder -> AppDefinition) =
         let builder = DistributedApplication.CreateBuilder(args: string array)
+        let (AppDefinition registrations) = describe builder
         let registry = Registry builder
         registrations |> List.iter (fun register -> register registry)
         builder
+
+    let build args definition = buildWith args (fun _ -> definition)
 
     let run (builder: IDistributedApplicationBuilder) =
         use app = builder.Build()
@@ -304,6 +307,16 @@ module Builders =
     let project name path = ProjectBuilder(name, path)
 
     let container name image tag = ContainerBuilder(name, image, tag)
+
+    let mailpit name tag =
+        container name "axllent/mailpit" tag {
+            http_endpoint "inbox" 8025
+            configure (fun resource ->
+                resource
+                    .WithEndpoint(targetPort = 1025, scheme = "tcp", name = "smtp")
+                    .WithHttpHealthCheck("/readyz", endpointName = "inbox")
+                |> ignore)
+        }
 
     let endpoint<'T when 'T :> IResourceWithEndpoints> name (resource: Description<'T>) =
         EndpointDescription(fun registry -> (registry.Resolve resource).GetEndpoint name)

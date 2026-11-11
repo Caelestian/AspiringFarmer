@@ -7,7 +7,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Configuration
 open Npgsql
 
-let run args name databases =
+let runWith configure args name databases =
     let builder = WebApplication.CreateBuilder(args: string array)
     let app = builder.Build()
 
@@ -40,4 +40,7 @@ let run args name databases =
     )
     |> ignore
 
+    configure app
     app.Run()
+
+let run args name databases = runWith ignore args name databases

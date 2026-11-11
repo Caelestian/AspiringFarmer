@@ -5,7 +5,8 @@
       "applicationUrl": "http://127.0.0.1:0",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
-        "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true"
+        "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
+        "Mail__Transport": "mailpit"
       }
     }
   }

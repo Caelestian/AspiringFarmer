@@ -4,8 +4,11 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="MailKit" />
     <PackageReference Include="Npgsql" />
     <Compile Include="../Shared/Web.fs" Link="Web.fs" />
+    <Compile Include="Mail.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

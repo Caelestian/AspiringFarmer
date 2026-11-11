@@ -38,6 +38,10 @@ For projects, `http_endpoint` and `https_endpoint` add named endpoints with Aspi
 Use `http_health_check` with the name of an HTTP or HTTPS endpoint and a path served by that project.
 Aspire treats HTTP 200 as healthy and uses the result when another project waits for this resource.
 
+`mailpit name tag` creates a container description with a TCP endpoint named `smtp` and an HTTP endpoint named `inbox`. The inbox readiness check uses `/readyz`.
+Use `endpoint_environment "Mail__Smtp__Endpoint" (endpoint "smtp" inbox)` in a project expression to pass the deferred SMTP URI. Add `wait_for inbox` to wait for Mailpit's readiness check.
+Use `AppHost.buildWith` when the application definition depends on Aspire's execution mode or configuration. The function receives the native builder before it registers the definition.
+
 `ResourceBuilder<'T>` lets integrations define resource expressions without changing the core library.
 Its factory receives the native application builder and returns the native resource builder.
 Its `name` must match the resource name used by the factory.

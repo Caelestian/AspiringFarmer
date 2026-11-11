@@ -6,6 +6,7 @@ open AspiringFarmer
 open AspiringFarmer.Redis
 
 let cache: Description<RedisResource> = redis "cache" { data_volume }
+let inbox: Description<ContainerResource> = mailpit "mailpit" "v1.33.1"
 
 // No core-library changes are needed to describe another connection resource.
 let connection =

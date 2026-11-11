@@ -37,7 +37,7 @@ def build():
 
 def measure_startup():
     env = dict(os.environ, DOTNET_ENVIRONMENT="Development", ASPNETCORE_URLS="http://127.0.0.1:0",
-               ASPIRE_ALLOW_UNSECURED_TRANSPORT="true")
+               ASPIRE_ALLOW_UNSECURED_TRANSPORT="true", Mail__Transport="disabled")
     output = []
     start = time.monotonic()
     process = subprocess.Popen(["dotnet", str(APPHOST_DLL), "--benchmark"], cwd=APPHOST,
