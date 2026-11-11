@@ -1,30 +1,24 @@
 open System
 open System.IO
-open System.Net.Http
-open System.Text.Json
-open System.Threading
-open System.Threading.Tasks
 open Aspire.Hosting
-open Aspire.Hosting.ApplicationModel
 open Microsoft.Extensions.Configuration
 open AspiringFarmer
 open AspiringFarmer.PostgreSQL
 
-let databaseNames = [ "identity"; "catalog"; "orders"; "inventory"; "reporting" ]
-
 let loadDefaults (builder: IDistributedApplicationBuilder) =
     // Aspire can load appsettings.json from the working directory when launched as a DLL.
-    let enabledKey = "Identity:Enabled"
-
-    if isNull builder.Configuration[enabledKey] then
-        let defaults =
+    let defaults =
+        lazy (
             ConfigurationBuilder()
                 .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
                 .Build()
+        )
 
-        builder.Configuration[enabledKey] <- defaults[enabledKey]
+    for key in [ "Identity:Enabled"; "Postgres:PersistData" ] do
+        if isNull builder.Configuration[key] then
+            builder.Configuration[key] <- defaults.Value[key]
 
-let describe ephemeral =
+let describe () =
     let outboundMail =
         mail "mail" {
             mailpit_inbox (mailpit "mailpit" "v1.33.1")
@@ -34,11 +28,7 @@ let describe ephemeral =
     let signIn = oidc "storefront-auth" { options_from_configuration "Identity" }
 
     appDefinition {
-        let server =
-            if ephemeral then
-                postgres "postgres" { configure ignore }
-            else
-                postgres "postgres" { data_volume }
+        let server = postgres "postgres" { data_volume_from_configuration "Postgres:PersistData" }
 
         let identity = database "identity" server { schema_project "../Identity.Schema/Identity.Schema.fsproj" }
         let catalog = database "catalog" server { schema_project "../Catalog.Schema/Catalog.Schema.fsproj" }
@@ -65,88 +55,23 @@ let describe ephemeral =
         }
     }
 
-let measure (app: DistributedApplication) (afterReady: CancellationToken -> Task) =
-    task {
-        use timeout = new CancellationTokenSource(TimeSpan.FromMinutes 2.0)
-        let notifications = app.ResourceNotifications
-
-        let watchHealth name =
-            task {
-                let! _ = notifications.WaitForResourceHealthyAsync(name, WaitBehavior.StopOnResourceUnavailable, timeout.Token)
-                Console.WriteLine($"sample:ready:{name}")
-            }
-
-        let watchSchema name =
-            task {
-                let! _ =
-                    notifications.WaitForResourceAsync(
-                        name, [| KnownResourceStates.Finished; KnownResourceStates.FailedToStart; KnownResourceStates.Exited |],
-                        timeout.Token
-                    )
-
-                match notifications.TryGetCurrentState name with
-                | true, state when state.Snapshot.ExitCode = Nullable 0 -> Console.WriteLine($"sample:ready:{name}")
-                | _ -> failwith $"Schema job {name} did not exit successfully."
-            }
-
-        let healthChecks = "postgres" :: "storefront" :: "back-office" :: databaseNames |> List.map watchHealth
-        let schemaChecks = databaseNames |> List.map (fun name -> watchSchema (name + "-schema"))
-        let readiness = Task.WhenAll(healthChecks @ schemaChecks)
-
-        do! app.StartAsync timeout.Token
-        Console.WriteLine("sample:host-started")
-        try
-            let! _ = readiness
-            Console.WriteLine("sample:all-ready")
-            do! afterReady timeout.Token
-        with error ->
-            do! app.StopAsync()
-            return raise error
-
-        do! app.StopAsync()
-    }
-
-let verifyDelivery (builder: IDistributedApplicationBuilder) =
-    let endpoint resourceName (endpointName: string) =
-        let resource = builder.Resources |> Seq.find (fun resource -> resource.Name = resourceName)
-        EndpointReference(resource :?> IResourceWithEndpoints, endpointName)
-
-    let storefront = endpoint "storefront" "https"
-    let inbox = endpoint "mailpit" "inbox"
-
-    fun cancellationToken ->
-        task {
-            use client = new HttpClient()
-            use! response = client.PostAsync(storefront.Url + "/mail/test", null, cancellationToken)
-            response.EnsureSuccessStatusCode() |> ignore
-            use! content = client.GetStreamAsync(inbox.Url + "/api/v1/messages", cancellationToken)
-            use! messages = JsonDocument.ParseAsync(content, cancellationToken = cancellationToken)
-            let delivered =
-                messages.RootElement.GetProperty("messages").EnumerateArray()
-                |> Seq.exists (fun message -> message.GetProperty("Subject").GetString() = "SharedPostgres mail test")
-
-            if not delivered then
-                failwith "Mailpit did not capture Storefront's message."
-
-            Console.WriteLine("PASS: Storefront sent a message captured by Mailpit.")
-        }
-        :> Task
-
 [<EntryPoint>]
 let main args =
     let benchmark = Array.contains "--benchmark" args
     let verifyMail = Array.contains "--verify-mail" args
     let hostArgs = args |> Array.filter (fun arg -> arg <> "--benchmark" && arg <> "--verify-mail")
-    let hostArgs = if verifyMail then Array.append hostArgs [| "--Mail:Transport=mailpit" |] else hostArgs
+    let verificationOverrides =
+        [| if benchmark || verifyMail then "--Postgres:PersistData=false"
+           if verifyMail then "--Mail:Transport=mailpit" |]
+
+    let hostArgs = Array.append hostArgs verificationOverrides
     let builder =
         AppHost.buildWith hostArgs (fun builder ->
             loadDefaults builder
-            describe (benchmark || verifyMail))
+            describe ())
 
     if benchmark || verifyMail then
-        let afterReady = if verifyMail then verifyDelivery builder else fun _ -> Task.CompletedTask
-        use app = builder.Build()
-        (measure app afterReady).GetAwaiter().GetResult()
+        Verification.run builder verifyMail
     else
         AppHost.run builder
 

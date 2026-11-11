@@ -10,7 +10,7 @@ The [AppHost](AppHost/Program.fs) declares one PostgreSQL server and five databa
 Both apps share the Identity database and wait on the same Identity schema job. Each app's `/health` endpoint queries the seeded row in all three of its databases.
 Storefront serves HTTPS. Back Office serves HTTP. Aspire probes each app through its declared endpoint.
 
-The schema jobs read their connection string from `ConnectionStrings__appdb`. The normal AppHost uses a data volume and saves the generated PostgreSQL password in .NET user secrets. The schema and seed SQL can run again against an existing volume.
+The schema jobs read their connection string from `ConnectionStrings__appdb`. The AppHost defaults `Postgres:PersistData` to `true` and saves the generated PostgreSQL password in .NET user secrets. Set `Postgres__PersistData=false` to start with fresh storage. Benchmarks and the Mailpit smoke check use fresh storage automatically. The schema and seed SQL can run again against an existing volume.
 
 ## Run the sample
 

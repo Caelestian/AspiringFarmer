@@ -1,5 +1,6 @@
 namespace AspiringFarmer.PostgreSQL
 
+open System
 open Aspire.Hosting
 open Aspire.Hosting.ApplicationModel
 open AspiringFarmer
@@ -25,6 +26,17 @@ type PostgreSQLBuilder(name: string, password: Description<ParameterResource> op
     [<CustomOperation("data_volume")>]
     member _.DataVolume(state: ResourceState<PostgresServerResource>) =
         state.Add(fun _ resource -> resource.WithDataVolume() |> ignore)
+
+    [<CustomOperation("data_volume_from_configuration")>]
+    member _.DataVolumeFromConfiguration(state: ResourceState<PostgresServerResource>, key: string) =
+        state.Add(fun _ resource ->
+            match resource.ApplicationBuilder.Configuration[key] with
+            | null -> ()
+            | setting ->
+                match Boolean.TryParse setting with
+                | true, true -> resource.WithDataVolume() |> ignore
+                | true, false -> ()
+                | false, _ -> invalidOp $"Configuration '{key}' must be true or false.")
 
 type PostgreSQLSchemaState =
     internal
