@@ -10,17 +10,6 @@ open AspiringFarmer.PostgreSQL
 
 let databaseNames = [ "identity"; "catalog"; "orders"; "inventory"; "reporting" ]
 
-let databaseWithSchema name projectName server =
-    let db = database name server { configure ignore }
-
-    let schema =
-        project (name + "-schema") $"../{projectName}/{projectName}.fsproj" {
-            reference_as "appdb" db
-            wait_for_child db
-        }
-
-    database_with_schema db schema
-
 let describe ephemeral (builder: IDistributedApplicationBuilder) =
     let outboundMail =
         mail "mail" {
@@ -41,11 +30,11 @@ let describe ephemeral (builder: IDistributedApplicationBuilder) =
             else
                 postgres "postgres" { data_volume }
 
-        let identity = databaseWithSchema "identity" "Identity.Schema" server
-        let catalog = databaseWithSchema "catalog" "Catalog.Schema" server
-        let orders = databaseWithSchema "orders" "Orders.Schema" server
-        let inventory = databaseWithSchema "inventory" "Inventory.Schema" server
-        let reporting = databaseWithSchema "reporting" "Reporting.Schema" server
+        let identity = database "identity" server { schema_project "../Identity.Schema/Identity.Schema.fsproj" }
+        let catalog = database "catalog" server { schema_project "../Catalog.Schema/Catalog.Schema.fsproj" }
+        let orders = database "orders" server { schema_project "../Orders.Schema/Orders.Schema.fsproj" }
+        let inventory = database "inventory" server { schema_project "../Inventory.Schema/Inventory.Schema.fsproj" }
+        let reporting = database "reporting" server { schema_project "../Reporting.Schema/Reporting.Schema.fsproj" }
 
         project "storefront" "../Storefront/Storefront.fsproj" {
             use_database identity

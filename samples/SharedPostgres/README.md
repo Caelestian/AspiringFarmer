@@ -1,6 +1,6 @@
 # Shared PostgreSQL AppHost
 
-The [AppHost](AppHost/Program.fs) declares one PostgreSQL server and five databases. Each database has one F# console project that applies its schema and seeds one row in a transaction. The AppHost pairs each database with its job using `database_with_schema`. Each web app uses `use_database` to receive the connection string and wait for the paired job to exit successfully.
+The [AppHost](AppHost/Program.fs) declares one PostgreSQL server and five databases. Each database declares a `schema_project` that applies its schema and seeds one row in a transaction. Each web app uses `use_database` to receive the connection string and wait for the paired job to exit successfully.
 
 | Web app | Databases and schema jobs |
 | --- | --- |
