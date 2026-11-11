@@ -13,6 +13,7 @@
     <ProjectReference Include="../../../src/AspiringFarmer.PostgreSQL/AspiringFarmer.PostgreSQL.fsproj" IsAspireProjectResource="false" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

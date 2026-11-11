@@ -1,27 +1,37 @@
 open System
+open System.IO
 open System.Net.Http
 open System.Text.Json
 open System.Threading
 open System.Threading.Tasks
 open Aspire.Hosting
 open Aspire.Hosting.ApplicationModel
+open Microsoft.Extensions.Configuration
 open AspiringFarmer
 open AspiringFarmer.PostgreSQL
 
 let databaseNames = [ "identity"; "catalog"; "orders"; "inventory"; "reporting" ]
 
-let describe ephemeral (builder: IDistributedApplicationBuilder) =
+let loadDefaults (builder: IDistributedApplicationBuilder) =
+    // Aspire can load appsettings.json from the working directory when launched as a DLL.
+    let enabledKey = "Identity:Enabled"
+
+    if isNull builder.Configuration[enabledKey] then
+        let defaults =
+            ConfigurationBuilder()
+                .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
+                .Build()
+
+        builder.Configuration[enabledKey] <- defaults[enabledKey]
+
+let describe ephemeral =
     let outboundMail =
         mail "mail" {
             mailpit_inbox (mailpit "mailpit" "v1.33.1")
             mailpit_environment "ASPNETCORE_ENVIRONMENT" "Development"
         }
 
-    let signIn =
-        if String.Equals(builder.Configuration["Identity:Enabled"], "true", StringComparison.OrdinalIgnoreCase) then
-            Some(oidc "storefront-auth" { options_from_configuration "Identity" })
-        else
-            None
+    let signIn = oidc "storefront-auth" { options_from_configuration "Identity" }
 
     appDefinition {
         let server =
@@ -128,7 +138,10 @@ let main args =
     let verifyMail = Array.contains "--verify-mail" args
     let hostArgs = args |> Array.filter (fun arg -> arg <> "--benchmark" && arg <> "--verify-mail")
     let hostArgs = if verifyMail then Array.append hostArgs [| "--Mail:Transport=mailpit" |] else hostArgs
-    let builder = AppHost.buildWith hostArgs (describe (benchmark || verifyMail))
+    let builder =
+        AppHost.buildWith hostArgs (fun builder ->
+            loadDefaults builder
+            describe (benchmark || verifyMail))
 
     if benchmark || verifyMail then
         let afterReady = if verifyMail then verifyDelivery builder else fun _ -> Task.CompletedTask

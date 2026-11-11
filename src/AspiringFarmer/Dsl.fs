@@ -151,24 +151,37 @@ type OidcBuilder(name: string) =
         let clientSecret = Parameters.describe (name + "-client-secret") true
 
         OidcDescription(fun registry resource ->
-            match options.AuthorityEndpoint with
-            | Some(EndpointDescription resolve, path) ->
-                let expression = ReferenceExpressionBuilder()
-                expression.AppendFormatted(resolve registry)
-                expression.AppendLiteral path
-                resource.WithEnvironment("Identity__Authority", expression.Build()) |> ignore
-            | None ->
-                resource.WithEnvironment("Identity__Authority", registry.Resolve authority) |> ignore
+            let section =
+                options.ConfigurationSection
+                |> Option.map resource.ApplicationBuilder.Configuration.GetSection
 
-            resource.WithEnvironment("Identity__ClientId", registry.Resolve clientId) |> ignore
-            resource.WithEnvironment("Identity__ClientSecret", registry.Resolve clientSecret) |> ignore
+            let enabled =
+                match section with
+                | Some section when not (isNull section["Enabled"]) ->
+                    match Boolean.TryParse section["Enabled"] with
+                    | true, value -> value
+                    | false, _ -> invalidOp $"Configuration '{section.Path}:Enabled' must be true or false."
+                | _ -> true
 
-            for section in Option.toList options.ConfigurationSection do
-                let scopes = resource.ApplicationBuilder.Configuration.GetSection(section).GetSection("Scopes")
+            if enabled then
+                match options.AuthorityEndpoint with
+                | Some(EndpointDescription resolve, path) ->
+                    let expression = ReferenceExpressionBuilder()
+                    expression.AppendFormatted(resolve registry)
+                    expression.AppendLiteral path
+                    resource.WithEnvironment("Identity__Authority", expression.Build()) |> ignore
+                | None ->
+                    resource.WithEnvironment("Identity__Authority", registry.Resolve authority) |> ignore
 
-                for index, scope in scopes.GetChildren() |> Seq.indexed do
-                    if not (String.IsNullOrWhiteSpace scope.Value) then
-                        resource.WithEnvironment($"Identity__Scopes__{index}", scope.Value) |> ignore)
+                resource.WithEnvironment("Identity__ClientId", registry.Resolve clientId) |> ignore
+                resource.WithEnvironment("Identity__ClientSecret", registry.Resolve clientSecret) |> ignore
+
+                for section in Option.toList section do
+                    let scopes = section.GetSection("Scopes")
+
+                    for index, scope in scopes.GetChildren() |> Seq.indexed do
+                        if not (String.IsNullOrWhiteSpace scope.Value) then
+                            resource.WithEnvironment($"Identity__Scopes__{index}", scope.Value) |> ignore)
 
 [<RequireQualifiedAccess>]
 type SmtpTls =

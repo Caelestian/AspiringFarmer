@@ -28,7 +28,7 @@ The sample was verified with two successive launches against the same PostgreSQL
 
 ## Sign in to Storefront
 
-Set `Identity__Enabled=true` on the AppHost to wire OIDC into Storefront. Provide the issuer URL and client ID under `Parameters:storefront-auth-authority` and `Parameters:storefront-auth-client-id`. Supply `Parameters:storefront-auth-client-secret` through user secrets or your deployment's secret configuration. Set optional scopes under `Identity:Scopes`.
+The AppHost defaults `Identity:Enabled` to `false` in `appsettings.json`. Set `Identity__Enabled=true` on the AppHost to wire OIDC into Storefront. Provide the issuer URL and client ID under `Parameters:storefront-auth-authority` and `Parameters:storefront-auth-client-id`. Supply `Parameters:storefront-auth-client-secret` through user secrets or your deployment's secret configuration. Set optional scopes under `Identity:Scopes`.
 
 Register the Storefront HTTPS URLs ending in `/signin-oidc` and `/signout-callback-oidc` with your provider. Open `/auth/sign-in` to sign in and `/auth/sign-out` to open the sign-out form. See the [OIDC helper configuration](../../src/README.md).
 

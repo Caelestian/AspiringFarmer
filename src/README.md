@@ -95,7 +95,7 @@ project "storefront" "../Storefront/Storefront.fsproj" {
 }
 ```
 
-Supply the issuer URL, client ID, and client secret through `Parameters:storefront-auth-authority`, `Parameters:storefront-auth-client-id`, and `Parameters:storefront-auth-client-secret`. The reference keeps all three values deferred and marks the client secret as secret. `options_from_configuration` copies optional scopes from the named section.
+Supply the issuer URL, client ID, and client secret through `Parameters:storefront-auth-authority`, `Parameters:storefront-auth-client-id`, and `Parameters:storefront-auth-client-secret`. The reference keeps all three values deferred and marks the client secret as secret. `options_from_configuration` reads `Enabled` and optional `Scopes` from the named section. Set `Enabled` to `false` to omit the OIDC configuration and its dependencies. An omitted flag defaults to `true`. The AppHost rejects malformed values when it builds the model.
 
 For a provider hosted by Aspire, use `authority_from_endpoint (endpoint "https" provider) ""` in the `oidc` expression. Pass a path such as `"/realms/example"` for a Keycloak realm. The endpoint and path must form the HTTPS issuer URL that the browser and client can reach. The provider's client registration supplies the client ID and secret.
 
