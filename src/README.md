@@ -39,7 +39,7 @@ Use `http_health_check` with the name of an HTTP or HTTPS endpoint and a path se
 Aspire treats HTTP 200 as healthy and uses the result when another project waits for this resource.
 
 `mailpit name tag` creates a container description with a TCP endpoint named `smtp` and an HTTP endpoint named `inbox`. The inbox readiness check uses `/readyz`.
-Use `endpoint_environment "Mail__Smtp__Endpoint" (endpoint "smtp" inbox)` in a project expression to pass the deferred SMTP URI. Add `wait_for inbox` to wait for Mailpit's readiness check.
+Use `smtp_reference (smtpFromMailpit inbox)` to supply the project's mail transport and deferred SMTP URI and wait for Mailpit's readiness check. This reference registers Mailpit in run mode.
 
 Use the SMTP builder to configure a project that reads the `Mail` settings.
 

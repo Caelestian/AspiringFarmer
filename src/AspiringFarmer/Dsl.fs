@@ -472,6 +472,18 @@ module Builders =
                 |> ignore)
         }
 
+    /// Connects an SMTP client to a local Mailpit resource during a run.
+    let smtpFromMailpit (inbox: Description<ContainerResource>) =
+        SmtpDescription(fun registry resource ->
+            if resource.ApplicationBuilder.ExecutionContext.IsRunMode then
+                let mailpit = registry.Resolve inbox
+
+                resource
+                    .WithEnvironment("Mail__Transport", "mailpit")
+                    .WithEnvironment("Mail__Smtp__Endpoint", mailpit.GetEndpoint "smtp")
+                    .WaitFor(mailpit)
+                |> ignore)
+
     let endpoint<'T when 'T :> IResourceWithEndpoints> name (resource: Description<'T>) =
         EndpointDescription(fun registry -> (registry.Resolve resource).GetEndpoint name)
 

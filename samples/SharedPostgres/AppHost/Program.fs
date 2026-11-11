@@ -17,44 +17,13 @@ let schemaJob name projectName db =
     }
 
 let describe ephemeral verifyMail (builder: IDistributedApplicationBuilder) =
-    let transport = if verifyMail then "mailpit" else builder.Configuration["Mail:Transport"]
+    let mail, configureMail = MailConfiguration.describe verifyMail builder
 
     let signIn =
         if String.Equals(builder.Configuration["Identity:Enabled"], "true", StringComparison.OrdinalIgnoreCase) then
             Some(oidc "storefront-auth" { options_from_configuration "Identity" })
         else
             None
-
-    let externalSmtp =
-        if transport = "smtp" then
-            Some(smtp "mail" { options_from_configuration "Mail:Smtp" })
-        else
-            None
-
-    let inbox =
-        if transport = "mailpit" && builder.ExecutionContext.IsRunMode then
-            Some(mailpit "mailpit" "v1.33.1")
-        else
-            None
-
-    let configureMail (resource: IResourceBuilder<ProjectResource>) =
-        let parameter key name secret =
-            resource.WithEnvironment(key, builder.AddParameter(name, secret = secret)) |> ignore
-
-        match transport with
-        | "mailpit" when inbox.IsSome ->
-            resource
-                .WithEnvironment("Mail__Transport", "mailpit")
-                .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
-            |> ignore
-        | null | "" | "disabled" | "mailpit" | "smtp" -> ()
-        | "exchange-smtp" | "graph" ->
-            resource.WithEnvironment("Mail__Transport", transport) |> ignore
-            parameter "Mail__From" "mail-from" false
-            parameter "Mail__TenantId" "mail-tenant-id" false
-            parameter "Mail__ClientId" "mail-client-id" false
-            parameter "Mail__ClientSecret" "mail-client-secret" true
-        | _ -> invalidOp "Unsupported Mail:Transport."
 
     appDefinition {
         let server =
@@ -81,36 +50,19 @@ let describe ephemeral verifyMail (builder: IDistributedApplicationBuilder) =
         inventorySchema
         reportingSchema
 
-        match inbox with
-        | Some inbox ->
-            project "storefront" "../Storefront/Storefront.fsproj" {
-                reference identity
-                reference catalog
-                reference orders
-                wait_for_completion identitySchema
-                wait_for_completion catalogSchema
-                wait_for_completion ordersSchema
-                https_endpoint "https"
-                http_health_check "https" "/health"
-                oidc_reference signIn
-                configure configureMail
-                endpoint_environment "Mail__Smtp__Endpoint" (endpoint "smtp" inbox)
-                wait_for inbox
-            }
-        | None ->
-            project "storefront" "../Storefront/Storefront.fsproj" {
-                reference identity
-                reference catalog
-                reference orders
-                wait_for_completion identitySchema
-                wait_for_completion catalogSchema
-                wait_for_completion ordersSchema
-                https_endpoint "https"
-                http_health_check "https" "/health"
-                oidc_reference signIn
-                configure configureMail
-                smtp_reference externalSmtp
-            }
+        project "storefront" "../Storefront/Storefront.fsproj" {
+            reference identity
+            reference catalog
+            reference orders
+            wait_for_completion identitySchema
+            wait_for_completion catalogSchema
+            wait_for_completion ordersSchema
+            https_endpoint "https"
+            http_health_check "https" "/health"
+            oidc_reference signIn
+            configure configureMail
+            smtp_reference mail
+        }
 
         project "back-office" "../BackOffice/BackOffice.fsproj" {
             reference identity
