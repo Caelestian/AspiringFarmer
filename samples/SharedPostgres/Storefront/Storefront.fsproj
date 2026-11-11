@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+    <Compile Include="../Shared/Web.fs" Link="Web.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+</Project>

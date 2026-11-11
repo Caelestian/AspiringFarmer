@@ -14,6 +14,7 @@ with native Aspire hosting. Development uses the stable .NET 10 SDK.
 
 - [Implicit yield syntax](prototypes/ImplicitYield/README.md)
 - [Native Aspire registration and runnable sample](prototypes/NativeAspire/README.md)
+- [Shared PostgreSQL sample and startup benchmark](samples/SharedPostgres/README.md)
 - [Performance benchmarks and initial results](benchmarks/README.md)
 
 ## Development

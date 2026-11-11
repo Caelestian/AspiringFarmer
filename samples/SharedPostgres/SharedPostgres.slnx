@@ -1,0 +1,12 @@
+<Solution>
+  <Project Path="AppHost/AppHost.fsproj" />
+  <Project Path="Identity.Schema/Identity.Schema.fsproj" />
+  <Project Path="Catalog.Schema/Catalog.Schema.fsproj" />
+  <Project Path="Orders.Schema/Orders.Schema.fsproj" />
+  <Project Path="Inventory.Schema/Inventory.Schema.fsproj" />
+  <Project Path="Reporting.Schema/Reporting.Schema.fsproj" />
+  <Project Path="Storefront/Storefront.fsproj" />
+  <Project Path="BackOffice/BackOffice.fsproj" />
+  <Project Path="../../src/AspiringFarmer/AspiringFarmer.fsproj" />
+  <Project Path="../../src/AspiringFarmer.PostgreSQL/AspiringFarmer.PostgreSQL.fsproj" />
+</Solution>
