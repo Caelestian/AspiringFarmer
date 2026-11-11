@@ -61,6 +61,18 @@ The publish command writes `docker-compose.yaml` and an `.env` template. Supply 
 
 The Compose configuration sets `POSTGRES_DB` for each server. Each migration waits for its server's TCP health check. Aspire emits `service_completed_successfully` for each API's migration dependency. Each branch uses its own database host and password input.
 
+### Run the Compose smoke test
+
+Install Python 3.9 or later, the .NET 10 SDK, the Aspire CLI, and Docker Compose. Start the Docker engine and run this command from the repository root.
+
+```sh
+python3 tests/Composition/check.py
+```
+
+The test publishes the AppHost, builds local images, and starts two temporary Compose projects. It checks database tables, migration exit codes, API start order, and HTTP responses. The failure scenario also checks that the blue API never starts.
+
+The test uses separate temporary passwords for blue and green. It removes its Compose stacks, volumes, and sample images after each run.
+
 ### Run the published sample locally
 
 Publish the two projects and build their local images from the repository root.
