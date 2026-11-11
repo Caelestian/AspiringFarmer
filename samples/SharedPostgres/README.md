@@ -26,6 +26,10 @@ Open the Aspire dashboard from the terminal output. The five schema jobs finish 
 
 The sample was verified with two successive launches against the same PostgreSQL volume. Both apps passed their health checks on the second launch.
 
+## Sign in to Storefront
+
+Storefront enables the OIDC routes when it receives an `Identity` configuration section. Supply `Identity__Authority`, `Identity__ClientId`, and `Identity__ClientSecret` in the Storefront process environment. Register the Storefront HTTPS URLs ending in `/signin-oidc` and `/signout-callback-oidc` with your provider. Open `/auth/sign-in` to sign in and `/auth/sign-out` to open the sign-out form. See the [OIDC helper configuration](../../src/README.md).
+
 ## Send mail
 
 The local launch profile selects Mailpit. Open the Storefront and Mailpit links in the Aspire dashboard. Send the fixed sample message with `curl -X POST <storefront-url>/mail/test`, then open the Mailpit inbox.

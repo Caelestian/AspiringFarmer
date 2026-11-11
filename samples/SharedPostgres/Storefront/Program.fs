@@ -5,6 +5,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Hosting
+open AspiringFarmer.Oidc
 open SharedPostgres
 
 let subject = "SharedPostgres mail test"
@@ -28,7 +29,14 @@ let main args =
             eprintfn "Set Mail__Transport before sending a test message."
             1
     | _ ->
+        let configureBuilder (builder: WebApplicationBuilder) =
+            if builder.Configuration.GetSection("Identity").Exists() then
+                Oidc.add builder
+
         let configure (app: WebApplication) =
+            if app.Configuration.GetSection("Identity").Exists() then
+                Oidc.map app
+
             let sender = Mail.create http app.Configuration
 
             match sender with
@@ -44,7 +52,7 @@ let main args =
                 |> ignore
             | _ -> ()
 
-        Web.runWith configure args "Storefront"
+        Web.runWith configureBuilder configure args "Storefront"
             [ "identity", "accounts"
               "catalog", "products"
               "orders", "orders" ]

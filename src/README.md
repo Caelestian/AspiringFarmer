@@ -56,6 +56,20 @@ The AppHost reads optional `Port` and `Tls` settings from the named configuratio
 
 Use `AppHost.buildWith` when the application definition depends on Aspire's execution mode or configuration. The function receives the native builder before it registers the definition.
 
+`AspiringFarmer.Oidc` provides an ASP.NET Core client helper. Reference the project in your web application and register the services before building it.
+
+```fsharp
+open AspiringFarmer.Oidc
+
+Oidc.add builder
+let app = builder.Build()
+Oidc.map app
+```
+
+Set `Identity:Authority` to the provider's HTTPS issuer URL. Set `Identity:ClientId` and supply `Identity:ClientSecret` from your secret configuration. Add optional scopes under `Identity:Scopes`.
+
+Register the application's HTTPS `/signin-oidc` and `/signout-callback-oidc` URLs with the provider. The provider must support authorization code with PKCE and expose an end-session endpoint for provider sign-out. Use `/auth/sign-in` to start sign-in and `/auth/sign-out` to open the sign-out confirmation form. Apply `RequireAuthorization()` to routes that need a signed-in user. [ASP.NET Core OIDC configuration](https://learn.microsoft.com/aspnet/core/security/authentication/configure-oidc-web-authentication)
+
 `ResourceBuilder<'T>` lets integrations define resource expressions without changing the core library.
 Its factory receives the native application builder and returns the native resource builder.
 Its `name` must match the resource name used by the factory.

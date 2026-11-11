@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../../src/AspiringFarmer.Oidc/AspiringFarmer.Oidc.fsproj" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="MailKit" />
     <PackageReference Include="Npgsql" />
